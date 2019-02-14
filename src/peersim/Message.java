@@ -24,13 +24,11 @@ import java.math.BigInteger;
  * 
  * @author Daniele Furlan, Maurizio Bonani
  * @version 1.0
+ * @author Nawras Nazar
  */
 // ______________________________________________________________________________________
 public class Message extends SimpleEvent {
 
-
-	public static final int MSG_STORE_SPACE_REQ = 10;
-	public static final int MSG_STORE_SPACE_RESP = 11;
 	/**
 	 * internal generator for unique message IDs
 	 */
@@ -42,7 +40,7 @@ public class Message extends SimpleEvent {
 	public static final int MSG_EMPTY = 0;
 
 	/**
-	 * Message Type: STORE (Stores a (key, value) pair in one node)
+	 * Message Type: STORE (demand a node to Store the <key, value> pair)
 	 */
 	public static final int MSG_STORE = 1;
 
@@ -57,15 +55,19 @@ public class Message extends SimpleEvent {
 	public static final int MSG_ROUTE = 3;
 
 	/**
-	 * Message Type: RESPONSE (response message to a findvalue or findnode)
+	 * Message Type: RESPONSE (response message to a findvalue, store request or findnode)
 	 */
 	public static final int MSG_RESPONSE = 4;
 
 	/**
-	 * Message Type: STORE_REQUEST(request some node to find closest node to store a file)_
+	 * Message Type: STORE_REQUEST, generated randomly by StoreMessageGenerator 
+	 * (request some node to find closest node to store a file)_
 	 */
 	public static final int MSG_STORE_REQUEST = 5;
-
+	
+	/**
+	 * respond about the demanded MSG_STORE operation result
+	 */
 	public static final int MSG_STORE_RESP = 6;
 
 	/**
@@ -76,7 +78,15 @@ public class Message extends SimpleEvent {
 	public static final int MSG_FINDVALUE = 8;
 
 	public static final int MSG_RETURNVALUE = 9;
-
+	
+	/**
+	 * request the available storage space
+	 */
+	public static final int MSG_STORE_SPACE_REQ = 10;
+	/**
+	 * respond MSG_STORE_SPACE_REQ by sending current storage size
+	 */
+	public static final int MSG_STORE_SPACE_RESP = 11;
 
 	// ______________________________________________________________________________________________
 	/**
@@ -173,12 +183,13 @@ public class Message extends SimpleEvent {
 	}
 
 	/**
-	 * make a store request
+	 * make a store request of type MSG_STORE_REQUEST
 	 * @param body
-	 * @return
+	 * 			Contains the randomly generated message
+	 * @return New Message
 	 */
 	public static final Message makeStoreReq(Object body){
-		return new Message(MSG_STORE_REQUEST,body);
+		return new Message(MSG_STORE_REQUEST, body);
 	}
 
 	/**

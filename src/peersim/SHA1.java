@@ -4,17 +4,22 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.UUID;
 
+/**
+ * It was SHA1 generator, but I will change the parameter to be SHA256 generator 
+ * @author chinese guy github
+ * @author Nawras Nazar
+ *
+ */
 public  class SHA1 {
     public static String shaEncode(String inStr) throws Exception {
         MessageDigest sha = null;
         try {
-            sha = MessageDigest.getInstance("SHA");
+            sha = MessageDigest.getInstance("SHA-1");
         } catch (Exception e) {
             System.out.println(e.toString());
             e.printStackTrace();
             return "";
         }
-
         byte[] byteArray = inStr.getBytes("UTF-8");
         byte[] md5Bytes = sha.digest(byteArray);
         StringBuffer hexValue = new StringBuffer();
@@ -30,8 +35,8 @@ public  class SHA1 {
 
     public static void main(String args[]) throws Exception {
         String str = UUID.randomUUID().toString();
-        System.out.println("原始：" + str);
-        System.out.println("SHA后：" + shaEncode(str));
+        System.out.println("Random Plain：" + str);
+        System.out.println("SHA Func：" + shaEncode(str));
         BigInteger bigInteger = new BigInteger(shaEncode(str),16);
         System.out.println(bigInteger);
         BigInteger bn3 = new BigInteger("2");
@@ -42,5 +47,17 @@ public  class SHA1 {
         }
         System.out.println(bn4);
         System.out.println(bigInteger.compareTo(bn4));
+        /////////////////////////////////////////
+        
+        String value = UUID.randomUUID().toString().replace("-","");
+        System.out.println("Value: " + value);
+		BigInteger key = null;
+		try {
+			key = new BigInteger(SHA1.shaEncode(value), 16);
+			System.out.println("key: "+ key.toString()); // base 10
+			System.out.println("key: "+ key.toString(16)); // base 16
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 }

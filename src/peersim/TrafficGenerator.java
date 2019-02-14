@@ -41,7 +41,7 @@ public class TrafficGenerator implements Control {
 
 	// ______________________________________________________________________________________________
 	/**
-	 * generates a random find node message, by selecting randomly the destination.
+	 * generates a random find node message, by selecting randomly (random but active) the destination.
 	 * 
 	 * @return Message
 	 */

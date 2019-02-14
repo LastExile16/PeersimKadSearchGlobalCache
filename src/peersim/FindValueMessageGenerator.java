@@ -40,7 +40,7 @@ public class FindValueMessageGenerator implements Control {
 	}
 
     /**
-     * 生成key为随机160bit,value为一个空obj的模拟StoreFile
+     * Generate a simulated StoreFile with a random key of 160 bits and a value of an empty obj
 	 * @return
      */
 	//______________________________________________________________________________________________

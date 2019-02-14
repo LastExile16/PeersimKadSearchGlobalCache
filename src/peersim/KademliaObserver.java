@@ -41,30 +41,45 @@ public class KademliaObserver implements Control {
 	public static IncrementalStats find_op = new IncrementalStats();
 
 	/**
-	 * keep statistic of number of  successful store message,表示成功存储的kv个数(ps:成功存储到一个节点就算成功存储)
+	 * keep statistic of number of successful store message, *Not number of times each message stored
+	 * 
 	 */
 	public static IncrementalStats stored_msg = new IncrementalStats();
-
+	
+	/**
+	 * statistics of number of successful store operations
+	 */
 	public static IncrementalStats real_store_operation = new IncrementalStats();
 
 
 	/**
-	 * keep statistic of number of  failed store message,表示存储失败的kv个数
+	 * keep statistic of the number of send store_msg request (MSG_STORE_REQUEST)
+	 * 
 	 */
 	public static IncrementalStats sendtostore_msg = new IncrementalStats();
-
-	public static IncrementalStats sendstore_resp = new IncrementalStats();
+	
 	/**
-	 * 过载节点的个数
+	 * statistics of number of msg responses to MSG_STORE, that is either succeeded or failed
+	 */
+	public static IncrementalStats sendstore_resp = new IncrementalStats();
+	
+	/**
+	 * keep statistic of the number of failed store operations  
+	 */
+	public static IncrementalStats sendstore_failed = new IncrementalStats();
+	
+	/**
+	 * Number of overloaded nodes
 	 */
 	public static IncrementalStats overloadNode = new IncrementalStats();
 	/**
-	 * keep statistic of number of  find value success,表示成功find value的次数
+	 * keep statistic of number of find value success,表示成功find value的次数
 	 */
 	public static IncrementalStats findVal_success  = new IncrementalStats();
 
 	/**
 	 * 发起find value的次数
+	 * The number of initiating "find value"
 	 */
 	public static IncrementalStats findVal_times = new IncrementalStats();
 
@@ -96,13 +111,16 @@ public class KademliaObserver implements Control {
 			if (!Network.get(i).isUp())
 				sz--;
 
-		String s = String.format("[time=%d]:[N=%d current nodes UP] [D=%f msg deliv] [%f min h] [%f average h] [%f max h] [%d min l] [%d msec average l] [%d max l] [%d findop sum] [%d sendstore_resp sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
+		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [D=%f msg deliv] [%f min h] [%f average h] [%f max h] [%d min l] [%d msec average l] [%d max l] [%d findop sum] [%d sendstore_resp sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
 				CommonState.getTime(), sz, msg_deliv.getSum(),hopStore.getMin(), hopStore.getAverage(), hopStore.getMax(), (int) timeStore.getMin(), (int) timeStore.getAverage(), (int) timeStore.getMax(),(int)find_op.getSum(),(int)sendstore_resp.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
+		*/
+		String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d sendstore_resp sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
+				CommonState.getTime(), sz,(int)find_op.getSum(),(int)sendstore_resp.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
 
 		if (CommonState.getTime() == 3600000) {
 			// create hop file
 			try {
-				File f = new File("H:/simulazioni/hopcountNEW.dat"); // " + sz + "
+				File f = new File("./hopcountNEW.dat"); // " + sz + "
 				f.createNewFile();
 				BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
 				out.write(String.valueOf(hopStore.getAverage()).replace(".", ",") + ";\n");
@@ -111,7 +129,7 @@ public class KademliaObserver implements Control {
 			}
 			// create latency file
 			try {
-				File f = new File("H:/simulazioni/latencyNEW.dat");
+				File f = new File("./latencyNEW.dat");
 				f.createNewFile();
 				BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
 				out.write(String.valueOf(timeStore.getAverage()).replace(".", ",") + ";\n");

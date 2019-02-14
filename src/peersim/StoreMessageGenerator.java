@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * This control generates random search traffic from nodes to random destination node.
+ * This control generates random store-message (kv tuples) traffic from nodes to random destination node.
  * 
- * @author Daniele Furlan, Maurizio Bonani
- * @version 1.0
+ * @author chinese guy github - zysung
+ * @author Nawras
  */
 
 // ______________________________________________________________________________________________
@@ -33,8 +33,17 @@ public class StoreMessageGenerator implements Control {
 	 * MSPastry Protocol ID to act
 	 */
 	private final int pid;
-
+	
+	/**
+	 * generated message value list.
+	 * So that FindValGenerator will generate random available find operations
+	 */
 	public static List<String> generateStoreVals= new ArrayList<>();
+	/**
+	 * keep the list of the generated keys with their status, true: stored successfully, false: store failed
+	 * this variable should replace generateStoreVals
+	 */
+	public static HashMap<BigInteger, Boolean> generatedKeyList= new HashMap<BigInteger, Boolean>();
 
 	// ______________________________________________________________________________________________
 	public StoreMessageGenerator(String prefix) {
@@ -42,24 +51,25 @@ public class StoreMessageGenerator implements Control {
 	}
 
 	/**
-	 * 生成key为随机160bit,value为一个空obj的模拟StoreFile
+	 * Generate a simulated StoreFile with a random value from UUID and the 160-bit key of SHA1(UUID) that will be changed to 256 bit SHA256
 	 * @return
+	 * 		returns the generated message of type MSG_STORE_REQUEST
 	 */
 	//______________________________________________________________________________________________
 	private Message generateStoreMessage(){
 		String value = UUID.randomUUID().toString().replace("-","");
 		BigInteger key = null;
 		try {
-			key = new BigInteger(SHA1.shaEncode(value),16);
+			key = new BigInteger(SHA1.shaEncode(value), 16);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		StoreFile sf = new StoreFile(key,value);
-		generateStoreVals.add(value);
+		StoreFile sf = new StoreFile(key, value);
+		generateStoreVals.add(value); // so that FindValGenerator will generate random available find operations
 		Message m = Message.makeStoreReq(sf);
 		m.timestamp = CommonState.getTime();
 		m.dest = key;
-
+		System.out.println("Debugging msgGenerator: "+sf);
 		return m;
 	}
 
@@ -72,14 +82,14 @@ public class StoreMessageGenerator implements Control {
 	 * @return boolean
 	 */
 	public boolean execute() {
-		Node start;
+		Node randomNode;
 		do {
-			start = Network.get(CommonState.r.nextInt(Network.size()));
-		} while ((start == null) || (!start.isUp()));
+			randomNode = Network.get(CommonState.r.nextInt(Network.size()));
+		} while ((randomNode == null) || (!randomNode.isUp()));
 
 		// send message
-//		System.out.println(((KademliaProtocol)start.getProtocol(pid)).getNodeId());
-		EDSimulator.add(0, generateStoreMessage(), start, pid);
+		System.out.println("randomly chosen node: "+((KademliaProtocol)randomNode.getProtocol(pid)).getNodeId());
+		EDSimulator.add(0, generateStoreMessage(), randomNode, pid);
 
 		return false;
 	}
