@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="jar/djep-1.0.0.jar"/>
+	<classpathentry kind="lib" path="jar/jep-2.3.0.jar"/>
+	<classpathentry kind="lib" path="jar/peersim-1.0.5.jar" sourcepath="/sehome/home/nawras/sim/peersim-1.0.5/src"/>
+	<classpathentry kind="lib" path="jar/peersim-doclet.jar"/>
+	<classpathentry kind="lib" path="jar/joinery-dataframe-1.9-jar-with-dependencies.jar"/>
+	<classpathentry kind="output" path="out/production/KadSim"/>
+</classpath>

@@ -1,8 +1,15 @@
 package peersim;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
+import joinery.DataFrame;
 
 /**
  * It was SHA1 generator, but I will change the parameter to be SHA256 generator 
@@ -59,5 +66,22 @@ public  class SHA1 {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		DataFrame df = null;
+		try {
+			df = DataFrame.readCsv("frequency-search-logs-with-header.csv");
+		} catch (IOException e1) {
+			System.out.print("dataset not accesible");
+			e1.printStackTrace();
+		}
+		
+		// nextInt is normally exclusive of the top value [min, max)
+		int rand = ThreadLocalRandom.current().nextInt(0, (int) df.count().col(0).get(0));
+		String k = (String) df.col(0).get(450);
+		Set<String> v = new HashSet<String>(Arrays.asList(((String) df.col(1).get(450)).split(", ")));
+		System.out.println(rand);
+		System.out.println(k);
+		System.out.println(v);
+		// df.plot();
+		
     }
 }

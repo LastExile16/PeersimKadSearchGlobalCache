@@ -17,19 +17,33 @@ public class StoreFile {
     /**
      * currently =64, but kv size should correspond the the size of the kv content!
      */
-    private int size = 64;
+    private int size;
     private int storeNodeRemainSize;
     
     /**
-     * 
+     * main constructor to generate variable sized messages
      * @param key
      * 			Hashed Key
      * @param value
      * 			Original Value
+     * @param size
+     * 			size of the message
+     */
+    public StoreFile(BigInteger key, Object value, int size) {
+        this.key = key;
+        this.value = value;
+        this.size = size;
+    }
+    /**
+     * constructor with default size
+     * @param key
+     * @param value
+     * @param size
      */
     public StoreFile(BigInteger key, Object value) {
         this.key = key;
         this.value = value;
+        this.size = 64;
     }
     
     public Object clone() throws CloneNotSupportedException 
