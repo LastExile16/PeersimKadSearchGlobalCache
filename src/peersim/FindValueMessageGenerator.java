@@ -55,14 +55,25 @@ public class FindValueMessageGenerator implements Control {
 			
 			// TODO - random value should follow normal distribution
 			// int rand = ThreadLocalRandom.current().nextInt(0, (int) StoreMessageGenerator.df.count().col(0).get(0));
-			int rand = ThreadLocalRandom.current().nextInt(0, StoreMessageGenerator.generatedKeyList_factor.size());
-			if(StoreMessageGenerator.generatedKeyList_factor != null && !StoreMessageGenerator.generatedKeyList_factor.isEmpty()) {
-				BigInteger key = (BigInteger) new ArrayList<>(StoreMessageGenerator.generatedKeyList_factor.keySet()).get(rand);
+			int rand = 0;
+			try {
+				// rand = ThreadLocalRandom.current().nextInt(0, StoreMessageGenerator.generatedKeyList_weight.size());
+				
+				rand = CommonState.r.nextInt(StoreMessageGenerator.generatedKeyList_weight.size());
+			} catch(IllegalArgumentException ex) { // IllegalArgumentException happens when generatedKeyList_weight.size = 0
+				ex.printStackTrace();
+				return null;
+			}
+			
+			if(StoreMessageGenerator.generatedKeyList_weight != null && !StoreMessageGenerator.generatedKeyList_weight.isEmpty()) {
+				BigInteger key = (BigInteger) new ArrayList<>(StoreMessageGenerator.generatedKeyList_weight.keySet()).get(rand);
 				if(!StoreMessageGenerator.generatedKeyList_status.get(key)) {
 					retry++;
 					continue;
 				}
+				// key = new BigInteger("679695804144180158154957817433688509811568326000");
 				Message m = Message.makeFindValue(key);
+				// System.out.print(m.body+" rand: " + rand);
 				m.timestamp = CommonState.getTime();
 				m.dest = key;
 	
@@ -83,7 +94,11 @@ public class FindValueMessageGenerator implements Control {
 	public boolean execute() {
 		Node start;
 		do {
-			start = Network.get(CommonState.r.nextInt(Network.size()));
+			int rand = CommonState.r.nextInt(Network.size());
+			// System.out.println("the node ind " + rand);
+			start = Network.get(rand);
+			// the node 162 always failed to find msg 679695804144180158154957817433688509811568326000
+			// start = Network.get(162);
 		} while ((start == null) || (!start.isUp()));
 		Message generatedQuery = generateFindValueMessage();
 		// return without adding any event if message generation was unsuccessful.
@@ -93,9 +108,10 @@ public class FindValueMessageGenerator implements Control {
 		}
 		
 		// send message
-		if(StoreMessageGenerator.generatedKeyList_factor != null && !StoreMessageGenerator.generatedKeyList_factor.isEmpty()) {
+		// condition is met in generateFindValueMessage method
+		//if(StoreMessageGenerator.generatedKeyList_weight != null && !StoreMessageGenerator.generatedKeyList_weight.isEmpty()) {
 			EDSimulator.add(0, generatedQuery, start, pid);
-		}
+		//}
 
 		return false;
 	}

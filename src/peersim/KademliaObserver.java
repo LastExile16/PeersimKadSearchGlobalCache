@@ -19,7 +19,7 @@ import peersim.util.IncrementalStats;
  * @version 1.0
  */
 public class KademliaObserver implements Control {
-
+public static int h=0;
 	/**
 	 * keep statistics of the number of hops of every message delivered.
 	 */
@@ -64,10 +64,14 @@ public class KademliaObserver implements Control {
 	public static IncrementalStats sendstore_resp = new IncrementalStats();
 	
 	/**
-	 * keep statistic of the number of failed store operations  
+	 * keep statistic of the number of failed store operations (this is per operation {i.e. per node})
 	 */
-	public static IncrementalStats sendstore_failed = new IncrementalStats();
+	public static IncrementalStats real_store_fail_operation = new IncrementalStats();
 	
+	/**
+	 * keep statistic of the number of not stored messages (this is per message) 
+	 */
+	public static IncrementalStats notstored_msg = new IncrementalStats();
 	/**
 	 * Number of overloaded nodes
 	 */
@@ -83,8 +87,16 @@ public class KademliaObserver implements Control {
 	 */
 	public static IncrementalStats findVal_times = new IncrementalStats();
 
+	/**
+	 * keep statistic of the number of times a node expected to have a value for the queried key (the node counted as close node to key)
+	 */
+	public static IncrementalStats closeNodeValExpected = new IncrementalStats();
 
-
+	/**
+	 * keep statistic of the number of times a node had the value and returned it (the close node had the value as expected)
+	 */
+	public static IncrementalStats closeNodeHadVal = new IncrementalStats();
+	
 	/** Parameter of the protocol we want to observe */
 	private static final String PAR_PROT = "protocol";
 
@@ -114,9 +126,12 @@ public class KademliaObserver implements Control {
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [D=%f msg deliv] [%f min h] [%f average h] [%f max h] [%d min l] [%d msec average l] [%d max l] [%d findop sum] [%d sendstore_resp sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
 				CommonState.getTime(), sz, msg_deliv.getSum(),hopStore.getMin(), hopStore.getAverage(), hopStore.getMax(), (int) timeStore.getMin(), (int) timeStore.getAverage(), (int) timeStore.getMax(),(int)find_op.getSum(),(int)sendstore_resp.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
 		*/
-		String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d sendstore_resp sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
-				CommonState.getTime(), sz,(int)find_op.getSum(),(int)sendstore_resp.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
-
+		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d closeNodeValExpected sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
+				CommonState.getTime(), sz,(int)find_op.getSum(),(int)closeNodeValExpected.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
+		*/
+		String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d closeNodeValExpected sum]  [%d closeNodeHadVal sum]  [%d overloadNode sum] [%d findValueTimes sum] [%d findValueSuccess] [%d realStoreOperation] [%d realStoreFailOperation]",
+				CommonState.getTime(), sz,(int)find_op.getSum(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum());
+		
 		if (CommonState.getTime() == 3600000) {
 			// create hop file
 			try {

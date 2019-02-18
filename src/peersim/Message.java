@@ -55,7 +55,8 @@ public class Message extends SimpleEvent {
 	public static final int MSG_ROUTE = 3;
 
 	/**
-	 * Message Type: RESPONSE (response message to a findvalue, store request or findnode)
+	 * Message Type: RESPONSE (response message to a findvalue, store request or findnode) <br>
+	 * it is a response for MSG_ROUTE
 	 */
 	public static final int MSG_RESPONSE = 4;
 
@@ -71,7 +72,7 @@ public class Message extends SimpleEvent {
 	public static final int MSG_STORE_RESP = 6;
 
 	/**
-	 * Message Type: MSG_FINDVALUE
+	 * Message Type: MSG_FINDVALUE from findValueGenerator
 	 */
 	public static final int  MSG_FINDVALUE_REQ= 7;
 
@@ -111,6 +112,7 @@ public class Message extends SimpleEvent {
 
 	/**
 	 * Recipient address of the message
+	 * in find operation this is either the nodeId or the key that we wantto find closest nodes to it
 	 */
 	public BigInteger dest;
 
@@ -198,7 +200,7 @@ public class Message extends SimpleEvent {
 	 * @return
 	 */
 	public static final Message makeFindValue(Object  body){
-		return new Message(MSG_FINDVALUE_REQ,body);
+		return new Message(MSG_FINDVALUE_REQ, body);
 	}
 
 	// ______________________________________________________________________________________________

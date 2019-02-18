@@ -54,7 +54,12 @@ public class StoreMessageGenerator implements Control {
 	/**
 	 * keep the list of the generated keys a long with the number of times the query issued in the dataset
 	 */
-	public static HashMap<BigInteger, Integer> generatedKeyList_factor = new HashMap<BigInteger, Integer>();
+	public static HashMap<BigInteger, Integer> generatedKeyList_weight = new HashMap<BigInteger, Integer>();
+	
+	/**
+	 * number of overloaded nodes (i.e. remaining storage = 0)
+	 */
+	public static Set<BigInteger> overLoadedNodes = new HashSet<>();
 	
 	public final static DataFrame df;
 	static {
@@ -125,7 +130,7 @@ public class StoreMessageGenerator implements Control {
 			// msg size = no.of elements*4 (each element is 4 bytes) 
 			StoreFile sf = new StoreFile(hashed_key, value, value.size()*4);
 			generatedKeyList_status.put(hashed_key, false); // so that FindValGenerator will generate random available find operations
-			generatedKeyList_factor.put(hashed_key, toIntExact((Long)df.col(2).get(rand)) );
+			generatedKeyList_weight.put(hashed_key, toIntExact((Long)df.col(2).get(rand)) );
 			
 			m = Message.makeStoreReq(sf);
 			m.timestamp = CommonState.getTime();
@@ -135,7 +140,170 @@ public class StoreMessageGenerator implements Control {
 		}
 		return m;
 	}
+	/**
+	 * distribution needed to be done only one time. 
+	 */
+	public boolean distributionFinished = false;
+	/**
+	 * distribute dataset messages over the network
+	 * each time the message distribution starts from a random node
+	 */
+	public void distributeMessages() {
+		if (distributionFinished) return;
+		int networkSize = Network.size();
+		int datasetSize = df.col(0).size();
+		BigInteger newNodeId = new BigInteger(KademliaCommonConfig.BITS, CommonState.r);
+		
+		/*Node randomNode = Network.get(1);
+		BigInteger newNodeId = ((KademliaProtocol)randomNode.getProtocol(pid)).getNodeId();*/
+		// XXX - the stdout is only for debugging
+		// System.out.println("new dummy node id: "+ newNodeId);
+		
+		KademliaProtocol kd = new KademliaProtocol(newNodeId);
+		kd.routingTable.nodeId = newNodeId;
+		BigInteger[] nodeIdList = new BigInteger[networkSize];
+		
+		for (int i=0; i< networkSize; i++) {
+			Node nd = Network.get(i);
+			nodeIdList[i] = ((KademliaProtocol)nd.getProtocol(pid)).getNodeId();
+			//System.out.println(nodeIdList[i]);
+		}
+		// XXX - the stdout is only for debugging
+		// System.out.println("node list size: "+nodeIdList.length);
+		
+		
+		int originalK = KademliaCommonConfig.K;
+		// one bucket need to store half of the network ids, but remember, maybe in a network of 16 nodes, only one node get id in the first half and all others get id in the second half! which means this lonely node should have space to store ALL of the other nodes in the second half.
+		KademliaCommonConfig.K = networkSize;
+		for(int n=0; n<nodeIdList.length; n++) {
+			kd.routingTable.addNeighbour(nodeIdList[n]);
+		}
+		
+		KademliaCommonConfig.K = originalK;
+		
+		//for(int i =0; i< kd.routingTable.k_buckets.size(); i++) {
+			//System.out.println(kd.routingTable.k_buckets);
+		//}
+		
+		// TODO - don't declare inside the loop
+		// String key = null;
+		// Set<String> value = null;
+		for (int i=0; i< datasetSize; i++) {
+			
+			// Node nd = Network.get(i % networkSize);
+			// KademliaProtocol kd = (KademliaProtocol)nd.getProtocol(pid);
+			
+			String key = (String) df.col(0).get(i);
+			BigInteger hashed_key = null;
+			try {
+				hashed_key = new BigInteger(SHA1.shaEncode(key), 16);
+			} catch (Exception e) {
+				System.err.println("Hashing the key failed");
+				e.printStackTrace();
+			}
+			
+			Set<String> value = new HashSet<String>(Arrays.asList(((String) df.col(1).get(i)).split(", ")));
+			int weight = toIntExact((Long)df.col(2).get(i));
+			
+			BigInteger[] kClosestNodeIds = kd.routingTable.getNeighbours2(hashed_key, kd.getNodeId());
+			// kk value is the key that never returns by some or all nodes
+			// Object kk = "679695804144180158154957817433688509811568326000";
 
+			// XXX - the stdout is only for debugging
+			// System.out.println(i+"- data hashed key: " + hashed_key);
+			// System.out.println("no. of closest nodes: " + kClosestNodeIds.length);
+			/*for (BigInteger closeNode : kClosestNodes) {
+				System.out.println(closeNode);
+			}*/
+			
+			// msg size = no.of elements*4 (each element is 4 bytes) 
+			StoreFile sf = new StoreFile(hashed_key, value, value.size()*4);
+			
+			boolean storeSucceed = false;
+			// loop through the close nodes list and store the kv into them
+			for (BigInteger closeNodeId : kClosestNodeIds) {
+				Node tmp = nodeIdtoNode(closeNodeId, pid);
+				if(!tmp.isUp()) {
+					continue;
+				}
+				KademliaProtocol closeNodeKad = (KademliaProtocol) tmp.getProtocol(pid);
+				if (closeNodeKad.getStoreCapacity() >= sf.getSize()) {
+					
+					// XXX - the stdout is only for debugging
+					/*
+					 * boolean cmp = closeNodeKad.getStoreCapacity() >= sf.getSize();
+					 * System.out.print("closeNodeKad.getStoreCapacity() >= sf.getSize() " + cmp);
+					 * System.out.print(" msg size: " + sf.getSize());
+					 * System.out.print(" capacity: " + closeNodeKad.getStoreCapacity() + " = ");
+					 * System.out.println( closeNodeKad.getStoreCapacity() - sf.getSize());
+					 */
+					
+					closeNodeKad.setStoreMap(sf.getKey(), sf.getValue());
+					closeNodeKad.setStoreCapacity(closeNodeKad.getStoreCapacity() - sf.getSize());
+					KademliaObserver.real_store_operation.add(1);
+					storeSucceed = true;
+					// XXX - the stdout is only for debugging
+					// System.out.println("store operation: " + closeNodeKad);
+				}else {
+					// XXX - the stdout is only for debugging
+					//System.out.println("Node:" + closeNodeKad.getNodeId() + ":" + closeNodeKad.getStoreCapacity()
+						//	+ " space storage is not enough to store kv data:" + sf.toString());
+					overLoadedNodes.add(closeNodeId);
+					KademliaObserver.real_store_fail_operation.add(1);
+				}
+			}
+			
+			generatedKeyList_status.put(hashed_key, storeSucceed); // so that FindValGenerator will generate random available find operations
+			generatedKeyList_weight.put(hashed_key, weight );
+			//break;
+			
+		}
+		//System.out.println(generatedKeyList_status);
+		KademliaObserver.overloadNode.add(overLoadedNodes.size());
+		distributionFinished = true;
+	}
+	/**
+	 * Originally from {@link KademliaProtocol} class
+	 * Search through the network the Node having a specific node Id, by performing
+	 * binary search (we concern about the ordering of the network). Finding a node
+	 * by binary search
+	 * 
+	 * @param searchNodeId BigInteger
+	 * @return Node
+	 */
+	private Node nodeIdtoNode(BigInteger searchNodeId, int kademliaid) {
+		if (searchNodeId == null)
+			return null;
+
+		int inf = 0;
+		int sup = Network.size() - 1;
+		int m;
+
+		while (inf <= sup) {
+			m = (inf + sup) / 2;
+
+			BigInteger mId = ((KademliaProtocol) Network.get(m).getProtocol(kademliaid)).nodeId;
+
+			if (mId.equals(searchNodeId))
+				return Network.get(m);
+
+			if (mId.compareTo(searchNodeId) < 0)
+				inf = m + 1;
+			else
+				sup = m - 1;
+		}
+
+		// perform a traditional search for more reliability (maybe the network is not
+		// ordered)
+		BigInteger mId;
+		for (int i = Network.size() - 1; i >= 0; i--) {
+			mId = ((KademliaProtocol) Network.get(i).getProtocol(kademliaid)).nodeId;
+			if (mId.equals(searchNodeId))
+				return Network.get(i);
+		}
+
+		return null;
+	}
 	// ______________________________________________________________________________________________
 	/**
 	 * every call of this control generates and send a random find node message
@@ -143,7 +311,9 @@ public class StoreMessageGenerator implements Control {
 	 * @return boolean
 	 */
 	public boolean execute() {
-		Node randomNode;
+		
+		/*
+		 
 		do {
 			randomNode = Network.get(CommonState.r.nextInt(Network.size()));
 		} while ((randomNode == null) || (!randomNode.isUp()));
@@ -157,8 +327,16 @@ public class StoreMessageGenerator implements Control {
 			return false; 
 		}
 		EDSimulator.add(0, generatedMessage, randomNode, pid);
-
+		*/
+		
+		distributeMessages();
+		/*int networkSize = Network.size();
+		for (int i=0; i< networkSize; i++) {
+			Node nd = Network.get(i);
+			System.out.println(((KademliaProtocol)nd.getProtocol(pid)).getNodeId());
+		}*/
 		return false;
+		// return true;
 	}
 
 	// ______________________________________________________________________________________________
