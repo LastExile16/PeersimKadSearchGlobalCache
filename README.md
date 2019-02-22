@@ -1,3 +1,2 @@
-# KadSim
-使用Peersim仿真器的kademlia仿真修改
-PeerSim仿真器通常被用来模拟P2P网络，本代码对PeerSim官方提供的Kad代码进行扩展，加入STORE模块和FIND_VALUE模块，使得代码具有kad算法的完整功能。
+# Siva
+Implementing search engine on Kademlia
