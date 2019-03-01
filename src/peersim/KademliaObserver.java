@@ -21,9 +21,14 @@ import peersim.util.IncrementalStats;
 public class KademliaObserver implements Control {
 public static int h=0;
 	/**
-	 * keep statistics of the number of hops of every message delivered.
+	 * keep statistics of the number of hops of every message delivered. wata har findnode mesgek chand nodi krdwa
 	 */
 	public static IncrementalStats hopStore = new IncrementalStats();
+
+	/**
+	 * keep statistics of the number of hops of every message delivered. wata har findValue mesgek chand nodi krdwa
+	 */
+	public static IncrementalStats hopFindValue = new IncrementalStats();
 
 	/**
 	 * keep statistics of the time every message delivered.
@@ -97,6 +102,37 @@ public static int h=0;
 	 */
 	public static IncrementalStats closeNodeHadVal = new IncrementalStats();
 	
+	/**
+	 * keep statistic of the number of cache hit (i.e. when searched kv is cached)
+	 */
+	public static IncrementalStats cacheHitPerMsg = new IncrementalStats();
+	
+	/**
+	 * keep statistic of the number of cache miss (i.e. when searched kv couldn't be found in cache)
+	 */
+	public static IncrementalStats cacheMissPerMsg = new IncrementalStats();
+	
+	/**
+	 * keep statistic of the number of cache hit (i.e. when searched kv is cached)
+	 */
+	public static IncrementalStats cacheHitPerQuery = new IncrementalStats();
+	
+	/**
+	 * keep statistic of the number of cache miss (i.e. when searched kv couldn't be found in cache)
+	 */
+	public static IncrementalStats cacheMissPerQuery = new IncrementalStats();
+	
+	/**
+	 * keep statistic of the number of storage hit (i.e. when searched kv is in storage)
+	 */
+	public static IncrementalStats storageHit = new IncrementalStats();
+	
+	/**
+	 * keep statistics of the time every query message delivered.
+	 */
+	public static IncrementalStats queryMsgTime = new IncrementalStats();
+
+	
 	/** Parameter of the protocol we want to observe */
 	private static final String PAR_PROT = "protocol";
 
@@ -129,16 +165,21 @@ public static int h=0;
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d closeNodeValExpected sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
 				CommonState.getTime(), sz,(int)find_op.getSum(),(int)closeNodeValExpected.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
 		*/
-		String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d closeNodeValExpected sum]  [%d closeNodeHadVal sum]  [%d overloadNode sum] [%d findValueTimes sum] [%d findValueSuccess] [%d realStoreOperation] [%d realStoreFailOperation]",
-				CommonState.getTime(), sz,(int)find_op.getSum(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum());
+		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d average no. of msgs per search] [%d closeNodeValExpected sum]  [%d closeNodeHadVal sum]  [%d overloadNode sum] [%d findValueTimes sum] [%d findValueSuccess] [%d realStoreOperation] [%d realStoreFailOperation] [%d cachHit sum] [%d storageHit sum]",
+				CommonState.getTime(), sz,(int)hopFindValue.getAverage(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum(), (int)cacheHit.getSum(), (int)storageHit.getSum());
+		*/
+		String s = String.format("[%d time]:[%d current nodes UP] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
+				CommonState.getTime(), h, (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
 		
-		if (CommonState.getTime() == 3600000) {
+		if (CommonState.getTime() == 3500000) {
 			// create hop file
 			try {
 				File f = new File("./hopcountNEW.dat"); // " + sz + "
 				f.createNewFile();
 				BufferedWriter out = new BufferedWriter(new FileWriter(f, true));
-				out.write(String.valueOf(hopStore.getAverage()).replace(".", ",") + ";\n");
+				// out.write(String.valueOf(hopStore.getAverage()).replace(".", ",") + ";\n");
+				//System.out.println(FindValueMessageGenerator.issuedQuery.values());
+				out.write(FindValueMessageGenerator.issuedQuery.values().toString());
 				out.close();
 			} catch (IOException e) {
 			}

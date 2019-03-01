@@ -1,7 +1,5 @@
 package peersim;
 
-import java.io.IOException;
-
 /**
  * A Kademlia implementation for PeerSim extending the EDProtocol class.<br>
  * See the Kademlia bibliografy for more information about the protocol.
@@ -13,8 +11,6 @@ import java.io.IOException;
 
 import java.math.BigInteger;
 import java.util.*;
-
-import joinery.DataFrame;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;
@@ -25,11 +21,12 @@ import peersim.transport.UnreliableTransport;
 
 //__________________________________________________________________________________________________
 public class KademliaProtocol implements Cloneable, EDProtocol {
-
+	private int cacheCapacity = 20;
 	// VARIABLE PARAMETERS
 	final String PAR_K = "K";
 	final String PAR_ALPHA = "ALPHA";
 	final String PAR_BITS = "BITS";
+	final String PAR_CACHE = "CACHE";
 
 	private static final String PAR_TRANSPORT = "transport";
 	private static String prefix = null;
@@ -60,7 +57,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	/**
 	 * find operations set
 	 */
-	private LinkedHashMap<Long, FindOperation> findOp;
+	private LinkedHashMap<Long, FindOperation> allIssuedfindOps;
 
 	/**
 	 * Node storage , <item key, providers>
@@ -82,9 +79,9 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	private int storeCapacity;
 	
 	/**
-	 * node cachce capacity
+	 * node cache capacity
 	 */
-	private int cacheCapacity = 50;
+	
 	private LRUCache cache;
 	/**
 	 * Store the storage capacity sent by the node, and then send STORE after
@@ -118,7 +115,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		return "KademliaProtocol{" + "PAR_K='" + PAR_K + '\'' + ", PAR_ALPHA='" + PAR_ALPHA + '\'' + ", PAR_BITS='"
 				+ PAR_BITS + '\'' + ", transport=" + transport + ", tid=" + tid + ", kademliaid=" + kademliaid
 				+ ", nodeId=" + nodeId + ", routingTable=" + routingTable + ", sentMsg=" + sentMsg + ", findOp="
-				+ findOp + ", storeMap=" + storeMap + ", storeCapacity=" + storeCapacity + '}';
+				+ allIssuedfindOps + ", storeMap=" + storeMap + ", storeCapacity=" + storeCapacity + '}';
 	}
 	/**
 	 * this useless constructor is for the message distribution process 
@@ -159,7 +156,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
 		sentMsg = new TreeMap<Long, Long>();
 
-		findOp = new LinkedHashMap<Long, FindOperation>();
+		allIssuedfindOps = new LinkedHashMap<Long, FindOperation>();
 
 		storeMap = new TreeMap<>();
 		searchResults = new TreeMap<>();
@@ -197,7 +194,8 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		KademliaCommonConfig.K = Configuration.getInt(prefix + "." + PAR_K, KademliaCommonConfig.K);
 		KademliaCommonConfig.ALPHA = Configuration.getInt(prefix + "." + PAR_ALPHA, KademliaCommonConfig.ALPHA);
 		KademliaCommonConfig.BITS = Configuration.getInt(prefix + "." + PAR_BITS, KademliaCommonConfig.BITS);
-
+		
+		cacheCapacity = Configuration.getInt(prefix + "." + PAR_CACHE, 0);
 		_ALREADY_INSTALLED = true;
 	}
 	
@@ -220,6 +218,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	public TreeMap<BigInteger, Object> getStoreMap() {
 		return storeMap;
 	}
+	/**
+	 * storeMap getter & setter added for message distribution of dataset from StoreMessageGenerator
+	 * @return
+	 */
 	public void setStoreMap(BigInteger key, Object val) {
 		storeMap.put(key, val);
 	}
@@ -286,7 +288,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		// get corresponding find operation (using the message field operationId)
 		// - Get fop, each node maintains a fop map, which is equivalent to a transfer
 		// process, the nodes are consistent in the process
-		FindOperation fop = this.findOp.get(m.operationId);
+		FindOperation fop = this.allIssuedfindOps.get(m.operationId);
 
 		if (fop != null) {
 			// save received neighbor in the closest Set of find operation
@@ -312,13 +314,13 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
 					// increment hop count
 					fop.nrHops++;
-
+					
 					// send find request
 					sendMessage(request, neighbour, myPid);
 				} else if (fop.available_requests == KademliaCommonConfig.ALPHA) { // no new neighbor and no outstanding
 																					// requests
 					// search operation finished
-					findOp.remove(fop.operationId);
+					allIssuedfindOps.remove(fop.operationId);
 					// - Randomly generated FIND_NODE message
 					if (fop.body.equals("Automatically Generated Traffic")
 							&& fop.closestSet.containsKey(fop.destNode)) {
@@ -333,16 +335,30 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 							storeSpaceReqMsg.src = this.nodeId;
 							storeSpaceReqMsg.dest = node;
 							storeSpaceReqMsg.operationId = m.operationId;
+							// for findnode prev condition is finishing line, but for msg_store we still have to exchange msgs
+							fop.nrHops++;
 							sendMessage(storeSpaceReqMsg, node, myPid);
+							
 							// XXX - the stdout is only for debugging
 							// System.out.println("send space ask msg to node:" + node);
 						}
 					} else if (fop.body instanceof BigInteger) { // ask the closest nodes for a value of the requested key.
 						for (BigInteger node : fop.closestSet.keySet()) {
 							Message findValMsg = new Message(Message.MSG_FINDVALUE, fop.body);
+							// Message findValMsg = new Message(Message.MSG_FINDVALUE, "HELLLOOOOO");
 							findValMsg.src = this.nodeId;
 							findValMsg.dest = node;
 							findValMsg.operationId = m.operationId;
+							findValMsg.timestamp = fop.timestamp; 
+							// there is one more sendMessge from this src to dest node so increase nrHops
+							fop.nrHops++;
+							//long timeInterval = (CommonState.getTime()) - (fop.timestamp);
+							//if(timeInterval>2000)
+							//System.out.println( ++KademliaObserver.h + "- " + timeInterval + " : " + fop.nrHops);
+							// KademliaObserver.queryMsgTime.add(timeInterval);
+							// FIXME the time interval is per search or per msg?? if per search then you should not count it here, rather it should be
+							// counted when receiving the first valid answer for my search in receiveVal() 
+							KademliaObserver.hopFindValue.add(fop.nrHops);
 							sendMessage(findValMsg, node, myPid);
 						}
 					} /*
@@ -356,11 +372,17 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 					return;
 
 				} else { // no neighbor available but exists outstanding request to wait
+					if (fop.body instanceof BigInteger) {
+						//System.out.print("outstanding messages: " );
+						//System.out.println(KademliaCommonConfig.ALPHA - fop.available_requests);
+						// ++KademliaObserver.h;
+					}
 					return;
 				}
 			}
 		} else {
-			System.err.println("There has been some error in the protocol");
+			// in my case this is not error but its when cache responds the request
+			// System.err.println("There has been some error in the protocol");
 		}
 	}
 
@@ -390,30 +412,49 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		 * iii = 2; System.out.println(iii); } }
 		 */
 		
-		// TODO - make it check cache instead of storage
+		/*
+		 * checking its own storage and cache, if kv was available then return it. why
+		 * storage check: bcz maybe I pinned the element to solve the bottleneck problem
+		 * on actual provider
+		 */
+		boolean locallyAvailable = false;
 		if (m.body instanceof BigInteger) {
 			BigInteger key = (BigInteger) m.body;
-			if(this.storeMap.containsKey(key)) {
-				sendValue(m, myPid);
+			/*if (this.storeMap.containsKey(key) && this.cache.member(key)) {
+				++KademliaObserver.h;
+				// System.out.println(KademliaObserver.h);
+			}*/
+			/*if(this.storeMap.containsKey(key)) {
+				//locallyAvailable = true;
+				KademliaObserver.storageHit.add(1);
+				//sendValue(m, myPid);
+				//return;
+			} else*/
+			if(this.cache.member(key)){
+				locallyAvailable = true;
+				KademliaObserver.cacheHitPerMsg.add(1);
+				KademliaObserver.cacheMissPerMsg.add(1);
+				sendValueFromCache(m, myPid);
+				return;
 			}
+		} 
+		if (!locallyAvailable) {
+			// get the ALPHA closest node to destNode
+			// - Returns the K known nodes closest to the target node
+			BigInteger[] neighbours = this.routingTable.getNeighbours(m.dest, m.src);
+	
+			// create a response message containing the neighbors (with the same id of the
+			// request)
+			Message response = new Message(Message.MSG_RESPONSE, neighbours);// The known k nearest node returns to the node
+																				// src
+			response.operationId = m.operationId;
+			response.dest = m.dest;
+			response.src = this.nodeId;
+			response.ackId = m.id; // set ACK number
+	
+			// send back the neighbors to the source of the message
+			sendMessage(response, m.src, myPid);
 		}
-		
-		
-		// get the ALPHA closest node to destNode
-		// - Returns the K known nodes closest to the target node
-		BigInteger[] neighbours = this.routingTable.getNeighbours(m.dest, m.src);
-
-		// create a response message containing the neighbors (with the same id of the
-		// request)
-		Message response = new Message(Message.MSG_RESPONSE, neighbours);// The known k nearest node returns to the node
-																			// src
-		response.operationId = m.operationId;
-		response.dest = m.dest;
-		response.src = this.nodeId;
-		response.ackId = m.id; // set ACK number
-
-		// send back the neighbors to the source of the message
-		sendMessage(response, m.src, myPid);
 	}
 
 	/**
@@ -432,7 +473,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		// create find operation and add to operations array
 		FindOperation fop = new FindOperation(m.dest, m.timestamp);
 		fop.body = m.body;
-		findOp.put(fop.operationId, fop);
+		allIssuedfindOps.put(fop.operationId, fop);
 
 		// get the ALPHA closest node to srcNode and add to find operation
 		// get up to K closest nodes to the srcNode (or to a key) and add to find operation
@@ -598,9 +639,11 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	
 	@SuppressWarnings(value = { "unchecked" })
 	private void sendValue(Message m, int myPid) {
+		
+		//TODO - followiong observer value mustn't be increased in case of premature val return (as I check in #routResponse())
 		KademliaObserver.closeNodeValExpected.add(1);
 		BigInteger key = (BigInteger) m.body;
-		//System.out.println(this.nodeId);
+		// System.out.println(this.nodeId);
 		// BigInteger key = new BigInteger( ((BigInteger)m.body).toString(10), 10);
 		for (BigInteger k : this.storeMap.keySet()) {
 			if (k.equals(key)) {
@@ -613,10 +656,46 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 				returnValMsg.dest = m.src;
 				returnValMsg.operationId = m.operationId;
 				returnValMsg.body = msg_body;
+				returnValMsg.timestamp = m.timestamp;
+				
 				// XXX - the stdout is only for debugging
 				// System.out.println("node:" + nodeId + " return value " + val + " to node:" + m.src);
+				
 				sendMessage(returnValMsg, m.src, myPid);
 				KademliaObserver.closeNodeHadVal.add(1);
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * return queried kv from cache (cache hit)
+	 * 
+	 */
+	@SuppressWarnings(value = { "unchecked" })
+	private void sendValueFromCache(Message m, int myPid) {
+		
+		// KademliaObserver.closeNodeValExpected.add(1);
+		BigInteger key = (BigInteger) m.body;
+		// System.out.println(this.nodeId);
+		// BigInteger key = new BigInteger( ((BigInteger)m.body).toString(10), 10);
+		for (BigInteger k : this.cache.allKeys()) {
+			if (k.equals(key)) {
+				Set<String> values = (HashSet<String>)this.cache.get(key);
+				ArrayList<Object> msg_body = new ArrayList<>();
+				msg_body.add(key);
+				msg_body.add(values);
+				Message returnValMsg = new Message(Message.MSG_RETURNVALUE_FROM_CACHE, null);
+				//Message returnValMsg = new Message(Message.MSG_RETURNVALUE, null);
+				returnValMsg.src = this.nodeId;
+				returnValMsg.dest = m.src;
+				returnValMsg.operationId = m.operationId;
+				returnValMsg.body = msg_body;
+				returnValMsg.ackId = m.ackId;
+				// XXX - the stdout is only for debugging
+				// System.out.println("////////node:" + nodeId + " return value " + values + " to node:" + m.src);
+				sendMessage(returnValMsg, m.src, myPid);
+				// KademliaObserver.closeNodeHadVal.add(1);
 				break;
 			}
 		}
@@ -628,20 +707,71 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	 */
 	@SuppressWarnings(value = { "unchecked" })
 	private void receiveVal(Message m, int myPid) {
+		
+		// fop.nrHops++; // wam birkrdawa ka dabe zyad bkre, bas naxer chunka nrhops bas zhmarai aw msganaya ka src node dainere
+		
+		//long timeInterval1 = (CommonState.getTime()) - (m.timestamp);
+		//System.out.println( ++KademliaObserver.h + "- " + timeInterval1 + " : " + m.nrHops);
 		BigInteger receKey = ((ArrayList<BigInteger>) m.body).get(0);
 		Set<String> receVal = ((ArrayList<HashSet<String>>) m.body).get(1);
 		if((Set<String>)searchResults.get(receKey) == null || !((Set<String>)searchResults.get(receKey)).containsAll(receVal)) {
 		//if (!receivedVals.contains(receVal)) {
 			searchResults.put(receKey, receVal);
 			cache.set(receKey, receVal);
+			// System.out.println(cache.getSize());
 			KademliaObserver.findVal_success.add(1);
+			long timeInterval = (CommonState.getTime()) - (m.timestamp);
+			// System.out.println( ++KademliaObserver.h + "- " + timeInterval + " : " + m.nrHops);
+			KademliaObserver.queryMsgTime.add(timeInterval);
+			// XXX - the stdout is only for debugging
+			// System.err.println("node " + this.nodeId + "'s findVals:" + this.searchResults);
+			
+			// System.err.println("node " + this.nodeId + "'s receiveVals:" + this.receivedVals);
+		}
+	}
+
+	/**
+	 * receive the result of your issued query from corresponding node (result found in cache)
+	 * @param m
+	 * @param myPid
+	 */
+	@SuppressWarnings(value = { "unchecked" })
+	private void receiveValFromCache(Message m, int myPid) {
+		
+		// fop.nrHops++; // wam birkrdawa ka dabe zyad bkre, bas naxer chunka nrhops bas zhmarai aw msganaya ka src node dainere
+		// TODO change closes node to true for the src of this msg
+		// FIXME if I do fop.available_requests++; without stopping the other ongoing searches, somehow the available_requests will be increased by 2 for msg 761, meaning available will become 5   
+		// TODO maybe I have to stop all other ongoiing requests when I receive one result
+		FindOperation fop = this.allIssuedfindOps.get(m.operationId);
+		if (fop == null) { // I'm not sure! this happens when among ALPHA requests more than one has it in cache, so first node returns value faster and src node will remove the operation from issuedfindops, then it receives answer from second nodes cache 
+							//(other than cache reponses, msgs will timeout)
+			return;
+		}
+		fop.available_requests++;
+		
+		//this remove will make other ongoing searches useless and result in "something wrong with protocol" output
+		this.allIssuedfindOps.remove(m.operationId);
+		// TODO - nrHops should be moved to the inside if condition below I think, bcz we want to count if its the first result
+		KademliaObserver.hopFindValue.add(fop.nrHops);
+		BigInteger receKey = ((ArrayList<BigInteger>) m.body).get(0);
+		Set<String> receVal = ((ArrayList<HashSet<String>>) m.body).get(1);
+		if((Set<String>)searchResults.get(receKey) == null || !((Set<String>)searchResults.get(receKey)).containsAll(receVal)) {
+		//if (!receivedVals.contains(receVal)) {
+			searchResults.put(receKey, receVal);
+			cache.set(receKey, receVal);
+			// System.out.println(cache.getSize());
+			KademliaObserver.findVal_success.add(1);
+			KademliaObserver.cacheHitPerQuery.add(1);
+			long timeInterval = (CommonState.getTime()) - (fop.timestamp);
+			// System.out.println( ++KademliaObserver.h + "- " + timeInterval + " : " + fop.nrHops);
+			KademliaObserver.queryMsgTime.add(timeInterval);
 			// XXX - the stdout is only for debugging
 			// System.err.println("node " + this.nodeId + "'s findVals:" + this.searchResults);
 
 			// System.err.println("node " + this.nodeId + "'s receiveVals:" + this.receivedVals);
 		}
 	}
-
+	
 	/**
 	 * send a message with current transport layer and starting the timeout timer
 	 * (which is an event) if the message is a request
@@ -753,17 +883,30 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
 		case Message.MSG_FINDVALUE_REQ:
 			m = (Message) event;
+			//TODODONE - change searchResults to cache storage checking
 			// XXX - the stdout is only for debugging
-			System.out.println("This node:" + this.nodeId + " finding value of key:" + m.body);
-			if (!searchResults.containsKey((BigInteger) m.body) || searchResults.get((BigInteger) m.body) == null ) {
+			//System.out.println("This node:" + this.nodeId + " finding value of key:" + m.body);
+			/*
+			 * if (!searchResults.containsKey((BigInteger) m.body) ||
+			 * searchResults.get((BigInteger) m.body) == null ) {
+			 * searchResults.put((BigInteger) m.body, null); find(m, myPid); // XXX - the
+			 * stdout is only for debugging // System.err.println("Again This node:" +
+			 * this.nodeId + "'s foundedVals:" + this.findVals+"\n");
+			 * KademliaObserver.findVal_times.add(1); } else { //System.err.println("node "
+			 * + this.nodeId + "'s findVals:" + this.searchResults);
+			 * System.out.println("This node already has this value: " + m.body); }
+			 */
+			
+			if (!cache.member((BigInteger) m.body) ) {
 				searchResults.put((BigInteger) m.body, null);
 				find(m, myPid);
 				// XXX - the stdout is only for debugging
 				// System.err.println("Again This node:" + this.nodeId + "'s foundedVals:" + this.findVals+"\n");
 				KademliaObserver.findVal_times.add(1);
 			} else {
-				System.err.println("node " + this.nodeId + "'s findVals:" + this.searchResults);
-				System.out.println("This node already has this value: " + m.body);
+				KademliaObserver.cacheHitPerMsg.add(1);
+				KademliaObserver.cacheHitPerQuery.add(1);
+				// System.out.println("available on local cache: " + m.body);
 			}
 			break;
 
@@ -776,22 +919,31 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 			m = (Message) event;
 			receiveVal(m, myPid);
 			break;
+			
+		case Message.MSG_RETURNVALUE_FROM_CACHE:
+			m = (Message) event;
+			sentMsg.remove(m.ackId);
+			receiveValFromCache(m, myPid);
+			break;
 
 		case Timeout.TIMEOUT: // timeout
 			Timeout t = (Timeout) event;
 			if (sentMsg.containsKey(t.msgID)) { // the response msg isn't arrived
-				// remove form sentMsg
+				// remove from sentMsg
 				sentMsg.remove(t.msgID);
-				// remove node from my routing table
-				this.routingTable.removeNeighbour(t.node);
-				// remove from closestSet of find operation
-				this.findOp.get(t.opID).closestSet.remove(t.node);
-				// try another node
-				Message m1 = new Message();
-				m1.operationId = t.opID;
-				m1.src = nodeId;
-				m1.dest = this.findOp.get(t.opID).destNode;
-				this.route(m1, myPid);
+				// remove from closestSet of find operation if not already removed
+				if(this.allIssuedfindOps.get(t.opID) != null) {
+					
+					this.allIssuedfindOps.get(t.opID).closestSet.remove(t.node);
+					// remove node from my routing table
+					this.routingTable.removeNeighbour(t.node);
+					// try another node
+					Message m1 = new Message();
+					m1.operationId = t.opID;
+					m1.src = nodeId;
+					m1.dest = this.allIssuedfindOps.get(t.opID).destNode;
+					this.route(m1, myPid);
+				}
 			}
 			break;
 

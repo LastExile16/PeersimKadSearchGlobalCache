@@ -88,6 +88,11 @@ public class Message extends SimpleEvent {
 	 * respond MSG_STORE_SPACE_REQ by sending current storage size
 	 */
 	public static final int MSG_STORE_SPACE_RESP = 11;
+	
+	/**
+	 * respond MSG_ROUTE when queried kv is available in cache storage
+	 */
+	public static final int MSG_RETURNVALUE_FROM_CACHE = 12;
 
 	// ______________________________________________________________________________________________
 	/**

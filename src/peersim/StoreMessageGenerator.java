@@ -61,9 +61,9 @@ public class StoreMessageGenerator implements Control {
 	 */
 	public static Set<BigInteger> overLoadedNodes = new HashSet<>();
 	
-	public final static DataFrame df;
+	public final static DataFrame<?> df;
 	static {
-		DataFrame tmp = null;
+		DataFrame<?> tmp = null;
 		try {
 			tmp = DataFrame.readCsv("frequency-search-logs-with-header.csv");
 		} catch (IOException e) {

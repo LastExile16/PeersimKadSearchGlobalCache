@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Nawras Nazar
@@ -23,8 +24,7 @@ public class LRUCache {
 			private static final long serialVersionUID = -348671614405439980L;
 			// removeEldestEntry() is overridden to impose a policy for removing old mappings when size goes beyond capacity.
 			protected boolean removeEldestEntry(Map.Entry eldest) 
-            { 
-				System.out.println("eldestEntry " );
+            {
                 return size() > CAPACITY; 
             } 
         }; 
@@ -33,8 +33,7 @@ public class LRUCache {
     // This method works in O(1) 
     public Object get(BigInteger key) 
     { 
-        System.out.println("Going to get the value " +  
-                               "for the key : " + key); 
+        // System.out.println("Going to get the value " + "for the key : " + key); 
         // return map.getOrDefault(key, -1);
         return map.get(key);
         
@@ -43,16 +42,38 @@ public class LRUCache {
     // This method works in O(1) 
     public void set(BigInteger key, Object value) 
     { 
-        System.out.println("Going to set the (key, " +  
-             "value) : (" + key + ", " + value + ")"); 
+        // System.out.println("Going to set the (key, " + "value) : (" + key + ", " + value + ")"); 
         map.put(key, value); 
     } 
     
+    /**
+     * membership check; a way to use containsKey of private Map 
+     * @param key
+     * @return
+     */
+    public boolean member(BigInteger key) {
+    	return this.map.containsKey(key);
+    }
+    
+    /**
+     * return the set of keys in the private Map
+     * @return
+     */
+    public Set<BigInteger> allKeys() {
+    	return this.map.keySet();
+    }
+    
+    /**
+     * return the number of kv in the map
+     * @return
+     */
+    public int getSize() {
+    	return this.map.size();
+    }
+    
     public static void main(String[] args) 
     { 
-        System.out.println("Going to test the LRU "+  
-                           " Cache Implementation"); 
-        LRUCache cache = new LRUCache(2); 
+        
         HashMap<Integer, Integer> cache2 = new HashMap<>(2);
         cache2.put(1, 101);
         cache2.put(2, 102);
@@ -70,9 +91,10 @@ public class LRUCache {
         System.out.println(cache2);
         cache2.put(14, 130);
         System.out.println(cache2);
-        // it will store a key (1) with value  
-        // 10 in the cache. 
-        cache.set(new BigInteger("1"), 10);  
+        
+        System.out.println("Going to test the LRU Cache Implementation"); 
+        LRUCache cache = new LRUCache(7);  
+        cache.set(new BigInteger("10"), 10);  
         cache.set(new BigInteger("11"), 10);  
         cache.set(new BigInteger("12"), 10);  
         cache.set(new BigInteger("13"), 10);  
