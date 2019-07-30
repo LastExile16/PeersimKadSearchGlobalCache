@@ -11,7 +11,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 
 
 /**
@@ -35,13 +34,6 @@ public static int i=0;
 	 * MSPastry Protocol ID to act
 	 */
 	private final int pid;
-	
-	private static ArrayList<BigInteger> KeysWithFrequency = new ArrayList<>();
-	private static Map<BigInteger, Boolean> halfhmap1 = new HashMap<>();
-	private static Map<BigInteger, Boolean> halfhmap2 = new HashMap<>();
-	private static ArrayList<BigInteger> halfFrequency1 = new ArrayList<>();
-	private static ArrayList<BigInteger> halfFrequency2 = new ArrayList<>();
-	private static boolean keyListContructionDone = false;
 	public static Map<BigInteger, Integer> issuedQuery = new HashMap<>();
 	// ______________________________________________________________________________________________
 	public FindValueMessageGenerator(String prefix) {
@@ -88,75 +80,20 @@ public static int i=0;
 	}
 	
 	/**
-	 * generating queries according to the frequency of the keyword in the original dataset
-	 * @return
-	 * 		the randomly chosen message
+	 * generating queries according to the frequency of the keyword in the original dataset that is according to the weight of each keyword
+	 * @return  Message
+	 * 		The randomly chosen message
 	 */
 	private Message generateFindValueMessageTrueProbability(){
-		ArrayList<BigInteger> tmp = null;
-		if (!keyListContructionDone) {
-			// generate a list of truly stored keys.
-			/*for(BigInteger keyStatus: StoreMessageGenerator.generatedKeyList_status.keySet()) {
-				if(StoreMessageGenerator.generatedKeyList_status.get(keyStatus)) {
-					int frequency = StoreMessageGenerator.generatedKeyList_weight.getOrDefault(keyStatus, -1);
-					for(int i=0; i<frequency; i++) {
-						KeysWithFrequency.add(keyStatus);
-					}
-				}
-			}*/
-			keyListContructionDone = true;
-			// System.out.print(keys.size());
-			
-			// locality
-		    int count=0;
-		    
-		    // creating two halves of keyword set
-		    for(Map.Entry<BigInteger, Boolean> entry : StoreMessageGenerator.generatedKeyList_status.entrySet()) {
-		        (count<(StoreMessageGenerator.generatedKeyList_status.size()/3) ? halfhmap1:halfhmap2).put(entry.getKey(), entry.getValue());
-		        count++;
-		    }
-		    
-		    // adding frequency to each group
-		    // group 1
-		    for(BigInteger keyStatus: halfhmap1.keySet()) {
-				if(halfhmap1.get(keyStatus)) {
-					int frequency = StoreMessageGenerator.generatedKeyList_weight.getOrDefault(keyStatus, -1);
-					for(int i=0; i<frequency; i++) {
-						halfFrequency1.add(keyStatus);
-					}
-				}
+		RandomCollection<BigInteger> rc = new RandomCollection<>();
+		for(Map.Entry<BigInteger, Integer> entry : StoreMessageGenerator.generatedKeyList_weight.entrySet()) {
+			// if the key is stored successfully in some nodes then add it to the RandomCollection rc
+			if(StoreMessageGenerator.generatedKeyList_status.get(entry.getKey())) {
+				rc.add(entry.getValue(), entry.getKey());
 			}
-		    
-		    // group 2
-		    for(BigInteger keyStatus: halfhmap2.keySet()) {
-				if(halfhmap2.get(keyStatus)) {
-					int frequency = StoreMessageGenerator.generatedKeyList_weight.getOrDefault(keyStatus, -1);
-					for(int i=0; i<frequency; i++) {
-						halfFrequency2.add(keyStatus);
-					}
-				}
-			}
-		    
 		}
-		
-		int randGroup = ThreadLocalRandom.current().nextInt(0, 10);
-	    
-	    if(randGroup < 9 ) {
-	    	tmp = halfFrequency1;
-	    }
-	    else {
-	    	tmp = halfFrequency2;
-	    }
-		// randomly choosing a message
-		int rand = 0;
-		try {
-			rand = CommonState.r.nextInt(tmp.size());
-		} catch(IllegalArgumentException ex) { // IllegalArgumentException happens when generatedKeyList_weight.size = 0
-			ex.printStackTrace();
-			return null;
-		}
-		
-		BigInteger key = tmp.get(rand);
+		// get a random key
+		BigInteger key = rc.next();
 		if(issuedQuery.containsKey(key)) {
 			//++KademliaObserver.h;
 			issuedQuery.put(key, issuedQuery.get(key)+1);

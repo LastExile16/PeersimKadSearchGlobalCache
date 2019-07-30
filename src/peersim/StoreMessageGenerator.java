@@ -146,7 +146,7 @@ public class StoreMessageGenerator implements Control {
 	public boolean distributionFinished = false;
 	/**
 	 * distribute dataset messages over the network
-	 * each time the message distribution starts from a random node
+	 * each time the message distribution starts from a random dummy node
 	 */
 	public void distributeMessages() {
 		if (distributionFinished) return;
@@ -173,7 +173,8 @@ public class StoreMessageGenerator implements Control {
 		
 		
 		int originalK = KademliaCommonConfig.K;
-		// one bucket need to store half of the network ids, but remember, maybe in a network of 16 nodes, only one node get id in the first half and all others get id in the second half! which means this lonely node should have space to store ALL of the other nodes in the second half.
+		// one bucket need to store half of the network ids, but remember, maybe in a network of 16 nodes, only one node get id in the first half 
+		// and all others get id in the second half! which means this lonely node should have space to store ALL of the other nodes in the second half.
 		KademliaCommonConfig.K = networkSize;
 		for(int n=0; n<nodeIdList.length; n++) {
 			kd.routingTable.addNeighbour(nodeIdList[n]);
@@ -220,7 +221,7 @@ public class StoreMessageGenerator implements Control {
 			StoreFile sf = new StoreFile(hashed_key, value, value.size()*4);
 			
 			boolean storeSucceed = false;
-			// loop through the close nodes list and store the kv into them
+			// loop through the close nodes list and store the selected(using the loop) kv into them
 			for (BigInteger closeNodeId : kClosestNodeIds) {
 				Node tmp = nodeIdtoNode(closeNodeId, pid);
 				if(!tmp.isUp()) {
