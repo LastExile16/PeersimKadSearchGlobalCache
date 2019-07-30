@@ -21,7 +21,7 @@ import peersim.transport.UnreliableTransport;
 
 //__________________________________________________________________________________________________
 public class KademliaProtocol implements Cloneable, EDProtocol {
-	private int cacheCapacity = 20;
+	private int cacheCapacity = 10;
 	// VARIABLE PARAMETERS
 	final String PAR_K = "K";
 	final String PAR_ALPHA = "ALPHA";
