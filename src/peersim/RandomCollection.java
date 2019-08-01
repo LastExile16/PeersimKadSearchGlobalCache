@@ -1,7 +1,12 @@
 package peersim;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+
+import com.opencsv.CSVWriter;
+
 import peersim.core.CommonState;
 
 /**
@@ -33,8 +38,74 @@ public class RandomCollection<E> {
     }
 
     public E next() {
+    	
     	// double value = random.nextDouble() * total;
         double value = CommonState.r.nextDouble() * total;
-        return map.higherEntry(value).getValue();
+    	E selectedKeyword = map.higherEntry(value).getValue();
+    	
+    	String csv = "findValueGeneratedQueries.csv";
+        CSVWriter writer = null;
+		try {
+			writer = new CSVWriter(new FileWriter(csv, true));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+          
+        //Create record
+        String [] record = {selectedKeyword.toString()};
+        //Write the record to file
+        writer.writeNext(record);
+          
+        //close the writer
+        try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+        return selectedKeyword;
+    }
+    
+    public E testDistribution() {
+    	String csv = "findValueGeneratedQueries.csv";
+        CSVWriter writer = null;
+		try {
+			writer = new CSVWriter(new FileWriter(csv, true));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+		E selectedKeyword = null;
+		double value = 0.0;
+		int no_of_issued_queries_in_dataset = 1500000;
+		for(int i=0; i<no_of_issued_queries_in_dataset; i++) {
+			// get a random key
+			
+			
+    	// double value = random.nextDouble() * total;
+        value = CommonState.r.nextDouble() * total;
+    	selectedKeyword = map.higherEntry(value).getValue();
+	    	if(i%10000 == 0) 
+				System.out.println(selectedKeyword.toString());
+			
+    	
+          
+        //Create record
+        // String [] record = {selectedKeyword.toString()};
+        //Write the record to file
+        writer.writeNext(new String[]{selectedKeyword.toString()});
+    	}
+        //close the writer
+        try {
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	System.exit(1);
+        return selectedKeyword;
     }
 }
