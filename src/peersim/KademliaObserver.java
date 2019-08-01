@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.omg.PortableInterceptor.INACTIVE;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
@@ -160,7 +159,7 @@ public static int h=0;
 				sz--;
 
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [D=%f msg deliv] [%f min h] [%f average h] [%f max h] [%d min l] [%d msec average l] [%d max l] [%d findop sum] [%d sendstore_resp sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
-				CommonState.getTime(), sz, msg_deliv.getSum(),hopStore.getMin(), hopStore.getAverage(), hopStore.getMax(), (int) timeStore.getMin(), (int) timeStore.getAverage(), (int) timeStore.getMax(),(int)find_op.getSum(),(int)sendstore_resp.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
+				CommonState.getTime(), , msg_deliv.getSum(),hopStore.getMin(), hopStore.getAverage(), hopStore.getMax(), (int) timeStore.getMin(), (int) timeStore.getAverage(), (int) timeStore.getMax(),(int)find_op.getSum(),(int)sendstore_resp.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
 		*/
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d findop sum] [%d closeNodeValExpected sum]  [%d storedMsg sum]  [%d sendtostore_msg sum] [%d findValueSuccess sum] [%d findValueTimes][%d realStoreOperation]",
 				CommonState.getTime(), sz,(int)find_op.getSum(),(int)closeNodeValExpected.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
@@ -169,7 +168,7 @@ public static int h=0;
 				CommonState.getTime(), sz,(int)hopFindValue.getAverage(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum(), (int)cacheHit.getSum(), (int)storageHit.getSum());
 		*/
 		String s = String.format("[%d time]:[%d current nodes UP] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
-				CommonState.getTime(), h, (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
+				CommonState.getTime(), sz, (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
 		
 		if (CommonState.getTime() == 3500000) {
 			// create hop file
