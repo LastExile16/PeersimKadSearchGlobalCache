@@ -43,12 +43,11 @@ public class RandomCollection<E> {
         double value = CommonState.r.nextDouble() * total;
     	E selectedKeyword = map.higherEntry(value).getValue();
     	
-    	String csv = "findValueGeneratedQueries.csv";
+    	/*String csv = "findValueGeneratedQueries.csv";
         CSVWriter writer = null;
 		try {
 			writer = new CSVWriter(new FileWriter(csv, true));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
           
@@ -63,7 +62,7 @@ public class RandomCollection<E> {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
     	
         return selectedKeyword;
     }
