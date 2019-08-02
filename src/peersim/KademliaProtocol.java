@@ -33,7 +33,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	private UnreliableTransport transport;
 	private int tid;
 	private int kademliaid;
-
+	
 	/**
 	 * allow to call the service initializer only once
 	 */
@@ -96,7 +96,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	/**
 	 * stores the issued queries (and their results when received)
 	 * replaces {@link KademliaProtocol#findVals } and {@link KademliaProtocol#receivedVals} <br>
-	 * FIXME should be replaced by {@link KademliaProtocol#cache}
+	 * 
+	 * note: should be replaced by {@link KademliaProtocol#cache}
+	 * update: No, we don't replace it since we changed the caching strategy from issuer node to the node with the closest NodeId to the issued query.
+	 * 			so we need to keep track of what search queries and results we've issued/received so far, in this searchResults variable.
 	 */
 	private TreeMap<BigInteger, Object> searchResults;
 	/**
@@ -112,10 +115,22 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
 	@Override
 	public String toString() {
-		return "KademliaProtocol{" + "PAR_K='" + PAR_K + '\'' + ", PAR_ALPHA='" + PAR_ALPHA + '\'' + ", PAR_BITS='"
-				+ PAR_BITS + '\'' + ", transport=" + transport + ", tid=" + tid + ", kademliaid=" + kademliaid
-				+ ", nodeId=" + nodeId + ", routingTable=" + routingTable + ", sentMsg=" + sentMsg + ", findOp="
-				+ allIssuedfindOps + ", storeMap=" + storeMap + ", storeCapacity=" + storeCapacity + '}';
+		return "KademliaProtocol{" + 
+				"PAR_K='" + PAR_K + '\'' + 
+				", PAR_ALPHA='" + PAR_ALPHA + '\'' + 
+				", PAR_BITS='" + PAR_BITS + '\'' + 
+				", transport=" + transport + 
+				", tid=" + tid + 
+				", kademliaid=" + kademliaid + 
+				", nodeId=" + nodeId + 
+				", routingTable=" + routingTable + 
+				", sentMsg=" + sentMsg + 
+				", findOp=" + allIssuedfindOps + 
+				", storeMap=" + storeMap + 
+				", storeCapacity=" + storeCapacity +
+				", cacheCapacity=" + cacheCapacity +
+				", cache=[" + cache.toString() + ']' +
+				'}';
 	}
 	/**
 	 * this useless constructor is for the message distribution process 
@@ -714,19 +729,40 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		//System.out.println( ++KademliaObserver.h + "- " + timeInterval1 + " : " + m.nrHops);
 		BigInteger receKey = ((ArrayList<BigInteger>) m.body).get(0);
 		Set<String> receVal = ((ArrayList<HashSet<String>>) m.body).get(1);
-		if((Set<String>)searchResults.get(receKey) == null || !((Set<String>)searchResults.get(receKey)).containsAll(receVal)) {
-		//if (!receivedVals.contains(receVal)) {
+		/**
+		 * the condition below is to make sure we count the received value one time since we may receive results of the issued query from 
+		 * different nodes (because findValue is parallel).
+		 */
+		// TODO -- what if the same node with the same query to issue, is chosen again by the simulator, the received value won't be counted if results are exactly the same
+		// and the findValuesuccess won't be increased even if we get the value for the issued query, I have to fix this in some ways
+		if(searchResults.get(receKey) == null || !((Set<String>)searchResults.get(receKey)).containsAll(receVal)) {
 			searchResults.put(receKey, receVal);
-			cache.set(receKey, receVal);
-			// System.out.println(cache.getSize());
+			
+			storeResultInCache(receKey, receVal);
+			
 			KademliaObserver.findVal_success.add(1);
 			long timeInterval = (CommonState.getTime()) - (m.timestamp);
 			// System.out.println( ++KademliaObserver.h + "- " + timeInterval + " : " + m.nrHops);
 			KademliaObserver.queryMsgTime.add(timeInterval);
-			// XXX - the stdout is only for debugging
-			// System.err.println("node " + this.nodeId + "'s findVals:" + this.searchResults);
-			
-			// System.err.println("node " + this.nodeId + "'s receiveVals:" + this.receivedVals);
+		}
+	}
+	
+	/**
+	 * Cache the search result in the node with the closest NodeId to the issued query directly 
+	 * without following proper DHT steps bcz we are not interested in knowing the bandwidth cost or time cost of this process.
+	 * @param receKey <br>The searched keyword
+	 * @param receVal <br>The received result set
+	 */
+	public void storeResultInCache(BigInteger receKey, Set<String> receVal) {
+		BigInteger[] kClosestNodeIds = KademliaObserver.supernode.routingTable.getNeighbours2(receKey, KademliaObserver.supernode.getNodeId());
+		for (BigInteger closeNodeId : kClosestNodeIds) {
+			Node tmp = nodeIdtoNode(closeNodeId);
+			if(!tmp.isUp()) {
+				continue;
+			}
+			KademliaProtocol closeNodeKad = (KademliaProtocol) tmp.getProtocol(kademliaid);
+			closeNodeKad.cache.set(receKey, receVal);
+			// System.out.println(closeNodeKad.cache.getSize());
 		}
 	}
 
@@ -758,8 +794,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		if((Set<String>)searchResults.get(receKey) == null || !((Set<String>)searchResults.get(receKey)).containsAll(receVal)) {
 		//if (!receivedVals.contains(receVal)) {
 			searchResults.put(receKey, receVal);
-			cache.set(receKey, receVal);
-			// System.out.println(cache.getSize());
+			storeResultInCache(receKey, receVal);
 			KademliaObserver.findVal_success.add(1);
 			KademliaObserver.cacheHitPerQuery.add(1);
 			long timeInterval = (CommonState.getTime()) - (fop.timestamp);
