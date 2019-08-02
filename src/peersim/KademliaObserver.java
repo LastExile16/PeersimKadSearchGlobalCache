@@ -133,7 +133,7 @@ public static int h=0;
 	public static IncrementalStats queryMsgTime = new IncrementalStats();
 	
 	/**
-	 * create a supernode (supernode) that has nodeId of the entire network peers. <br>
+	 * create a supernode that has nodeId of the entire network peers. <br>
 	 * we need it to store the result cache in the corresponding node directly since we are not interested in the 
 	 * steps of "storing the result cache" and we don't calculate anything related to it. <br>
 	 * we may also need it to observe some parameters in future. <br>
