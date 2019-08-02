@@ -171,7 +171,7 @@ public class RoutingTable implements Cloneable {
 	 * @return String
 	 */
 	public String toString() {
-		return "";
+		return k_buckets.toString();
 	}
 	// ______________________________________________________________________________________________
 
