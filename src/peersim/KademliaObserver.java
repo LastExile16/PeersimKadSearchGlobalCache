@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 
 import peersim.config.Configuration;
 import peersim.core.CommonState;
@@ -130,7 +131,16 @@ public static int h=0;
 	 * keep statistics of the time every query message delivered.
 	 */
 	public static IncrementalStats queryMsgTime = new IncrementalStats();
-
+	
+	/**
+	 * create a supernode (supernode) that has nodeId of the entire network peers. <br>
+	 * we need it to store the result cache in the corresponding node directly since we are not interested in the 
+	 * steps of "storing the result cache" and we don't calculate anything related to it. <br>
+	 * we may also need it to observe some parameters in future. <br>
+	 * -- in future if we needed to calculate the bandwidth cost or time cost of result cache storage, then we have to use proper DHT steps.
+	 */
+	public static BigInteger supernodeId = new BigInteger(KademliaCommonConfig.BITS, CommonState.r);
+	public static KademliaProtocol supernode = new KademliaProtocol(supernodeId);
 	
 	/** Parameter of the protocol we want to observe */
 	private static final String PAR_PROT = "protocol";
@@ -170,6 +180,7 @@ public static int h=0;
 		String s = String.format("[%d time]:[%d current nodes UP] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
 				CommonState.getTime(), sz, (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
 		
+		/* not useful for now
 		if (CommonState.getTime() == 3500000) {
 			// create hop file
 			try {
@@ -192,8 +203,13 @@ public static int h=0;
 			} catch (IOException e) {
 			}
 
-		}
-
+		}*/
+		
+		// XXX debug ouput to show the routing table of the supernode to make sure it contains the entire network 
+		 /* if(CommonState.getTime()>100000)
+			System.exit(1);
+		System.out.println("rt: "+supernode.routingTable.toString());*/
+		
 		System.err.println(s);
 
 		return false;
