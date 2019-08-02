@@ -97,27 +97,27 @@ public class LRUCache {
         cache.set(new BigInteger("10"), 10);  
         cache.set(new BigInteger("11"), 10);  
         cache.set(new BigInteger("12"), 10);  
-        cache.set(new BigInteger("13"), 10);  
+        cache.set(new BigInteger("13"), 10);
+        System.out.println("Size::: " + cache.getSize());
         cache.set(new BigInteger("14"), 10);  
         cache.set(new BigInteger("15"), 10);  
-  
-        // it will store a key (1) with value 10 in the cache. 
         cache.set(new BigInteger("2"), 20);  
-        System.out.println("Value for the key: 1 is " +  
-                           cache.get(new BigInteger("1"))); // returns 10 
-  
+        System.out.println("Size::: " + cache.getSize());
+        System.out.println("Value for the key: 2 is " +  
+                           cache.get(new BigInteger("2"))); // returns 10 
+        System.out.println("Size::: " + cache.getSize());
         // evicts key 2 and store a key (3) with 
         // value 30 in the cache. 
         cache.set(new BigInteger("3"), 30);  
   
-        System.out.println("Value for the key: 2 is " +  
-                cache.get(new BigInteger("2"))); // returns -1 (not found) 
+        System.out.println("Value for the key: 3 is " +  
+                cache.get(new BigInteger("3"))); // returns -1 (not found) 
   
         // evicts key 1 and store a key (4) with 
         // value 40 in the cache. 
         cache.set(new BigInteger("4"), 40);  
-        System.out.println("Value for the key: 1 is " + 
-               cache.get(new BigInteger("1"))); // returns -1 (not found) 
+        System.out.println("Value for the key: 10 is " + 
+               cache.get(new BigInteger("10"))); // returns -1 (not found) 
         System.out.println("Value for the key: 3 is " +  
                            cache.get(new BigInteger("3"))); // returns 30 
         System.out.println("Value for the key: 4 is " + 
