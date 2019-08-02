@@ -152,15 +152,10 @@ public class StoreMessageGenerator implements Control {
 		if (distributionFinished) return;
 		int networkSize = Network.size();
 		int datasetSize = df.col(0).size();
-		BigInteger newNodeId = new BigInteger(KademliaCommonConfig.BITS, CommonState.r);
+		// BigInteger newNodeId = new BigInteger(KademliaCommonConfig.BITS, CommonState.r);
+		// KademliaProtocol kd = new KademliaProtocol(newNodeId);
 		
-		/*Node randomNode = Network.get(1);
-		BigInteger newNodeId = ((KademliaProtocol)randomNode.getProtocol(pid)).getNodeId();*/
-		// XXX - the stdout is only for debugging
-		// System.out.println("new dummy node id: "+ newNodeId);
-		
-		KademliaProtocol kd = new KademliaProtocol(newNodeId);
-		kd.routingTable.nodeId = newNodeId;
+		KademliaObserver.supernode.routingTable.nodeId = KademliaObserver.supernodeId;
 		BigInteger[] nodeIdList = new BigInteger[networkSize];
 		
 		for (int i=0; i< networkSize; i++) {
@@ -177,7 +172,7 @@ public class StoreMessageGenerator implements Control {
 		// and all others get id in the second half! which means this lonely node should have space to store ALL of the other nodes in the second half.
 		KademliaCommonConfig.K = networkSize;
 		for(int n=0; n<nodeIdList.length; n++) {
-			kd.routingTable.addNeighbour(nodeIdList[n]);
+			KademliaObserver.supernode.routingTable.addNeighbour(nodeIdList[n]);
 		}
 		
 		KademliaCommonConfig.K = originalK;
@@ -186,9 +181,6 @@ public class StoreMessageGenerator implements Control {
 			//System.out.println(kd.routingTable.k_buckets);
 		//}
 		
-		// TODO - don't declare inside the loop
-		// String key = null;
-		// Set<String> value = null;
 		for (int i=0; i< datasetSize; i++) {
 			
 			// Node nd = Network.get(i % networkSize);
@@ -206,7 +198,7 @@ public class StoreMessageGenerator implements Control {
 			Set<String> value = new HashSet<String>(Arrays.asList(((String) df.col(1).get(i)).split(", ")));
 			int weight = toIntExact((Long)df.col(2).get(i));
 			
-			BigInteger[] kClosestNodeIds = kd.routingTable.getNeighbours2(hashed_key, kd.getNodeId());
+			BigInteger[] kClosestNodeIds = KademliaObserver.supernode.routingTable.getNeighbours2(hashed_key, KademliaObserver.supernode.getNodeId());
 			// kk value is the key that never returns by some or all nodes
 			// Object kk = "679695804144180158154957817433688509811568326000";
 
