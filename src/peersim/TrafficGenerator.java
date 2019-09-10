@@ -6,7 +6,7 @@ import peersim.core.Control;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.edsim.EDSimulator;
-import sun.nio.ch.Net;
+//import sun.nio.ch.Net; **The type sun.nio.ch.Net is not accessible
 
 import java.math.BigInteger;
 
