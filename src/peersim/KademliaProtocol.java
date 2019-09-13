@@ -286,7 +286,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	 * Continue to route after receiving the resp of the route Perform the required
 	 * operation upon receiving a message in response to a ROUTE message.<br>
 	 * Update the find operation record with the closest set of neighbor received.
-	 * Than, send as many ROUTE request I can (according to the ALPHA
+	 * Then, send as many ROUTE request possible (according to the ALPHA
 	 * parameter).<br>
 	 * If no closest neighbor available and no outstanding messages stop the find
 	 * operation.
@@ -651,7 +651,11 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 			this.nodeSpace.clear();
 		}
 	}
-	
+	/**
+	 * return queried keys' value if available
+	 * @param m - query messages
+	 * @param myPid
+	 */
 	@SuppressWarnings(value = { "unchecked" })
 	private void sendValue(Message m, int myPid) {
 		
@@ -717,6 +721,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	}
 	/**
 	 * receive the result of your issued query from corresponding node
+	 * NOTE: IF NO RESULT FOUND, THIS METHOD WON'T BE CALLED, IT STOPS BEFORE GETTING INTO HERE, in {@link #sendValue(Message, int)}
 	 * @param m
 	 * @param myPid
 	 */
