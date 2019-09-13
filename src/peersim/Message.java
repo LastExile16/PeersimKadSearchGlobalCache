@@ -202,7 +202,7 @@ public class Message extends SimpleEvent {
 	/**
 	 * make a findvalue request
 	 * @param body
-	 * @return
+	 * @return Message new Message(MSG_FINDVALUE_REQ, body);
 	 */
 	public static final Message makeFindValue(Object  body){
 		return new Message(MSG_FINDVALUE_REQ, body);
@@ -231,6 +231,7 @@ public class Message extends SimpleEvent {
 		dolly.src = this.src;
 		dolly.dest = this.dest;
 		dolly.operationId = this.operationId;
+		// FIXME this shoud be deep clone not adding a reference only
 		dolly.body = this.body; // deep cloning?
 
 		return dolly;
