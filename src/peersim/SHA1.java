@@ -41,6 +41,15 @@ public  class SHA1 {
     }
 
     public static void main(String args[]) throws Exception {
+    	//1- two generated queries are combined
+    	//2- encoded by SHA1
+    	//3- stored as BigInteger in base16
+    	//4- print out the result in base10; that is the new query.
+		String sss = "441360378140870817611248411035166340804225760090"+"1261425585535595253771221081958815840050577628176";
+		 System.out.println("SHA SSS：" + shaEncode(sss));
+		 BigInteger bint = new BigInteger(shaEncode(sss),16);
+	        System.out.println(bint.toString());
+	        
         String str = UUID.randomUUID().toString();
         System.out.println("Random Plain：" + str);
         System.out.println("SHA Func：" + shaEncode(str));
