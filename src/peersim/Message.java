@@ -220,8 +220,12 @@ public class Message extends SimpleEvent {
 
 	// ______________________________________________________________________________________________
 	public String toString() {
-		String s = "[ID=" + id + "][SRC="+ src + "]" +"][DEST=" + dest + "]";
-		return s + "[Type=" + messageTypetoString() + "] BODY=(...)";
+		String s = "[ID=" + id + "][SRC="+ src + "]" +"][DEST=" + dest + "]\n"+
+					"OperationID=" + operationId + "\n" +
+					"acknowledgeID = "+ ackId + "\n" +
+					"nrHops = " + nrHops + "\n" +
+					"[Type=" + messageTypetoString() + "] BODY = " + body;
+					return s;
 	}
 
 	// ______________________________________________________________________________________________
@@ -248,12 +252,31 @@ public class Message extends SimpleEvent {
 				return "MSG_FINDNODE";
 			case MSG_ROUTE:
 				return "MSG_FINDVALUE";
+			case MSG_RESPONSE:
+				return "MSG_RESPONSE";
+			case MSG_STORE_REQUEST:
+				return "MSG_STORE_REQUEST";
+			case MSG_STORE_RESP:
+				return "MSG_STORE_RESP";
+			case MSG_FINDVALUE_REQ:
+				return " MSG_FINDVALUE_REQ";
+			case MSG_FINDVALUE:
+				return "MSG_FINDVALUE";
+			case MSG_RETURNVALUE:
+				return "MSG_RETURNVALUE";
+			case MSG_STORE_SPACE_REQ:
+				return "MSG_STORE_SPACE_REQ";
+			case MSG_STORE_SPACE_RESP:
+				return "MSG_STORE_SPACE_RESP";
+			case MSG_RETURNVALUE_FROM_CACHE:
+				return "MSG_RETURNVALUE_FROM_CACHE";
+	
 			default:
 				return "UNKNOW:" + type;
 		}
 	}
 
-	public static  String messageTypetoString(int type) {
+	public static String messageTypetoString(int type) {
 		switch (type) {
 			case MSG_EMPTY:
 				return "MSG_EMPTY";
@@ -263,8 +286,25 @@ public class Message extends SimpleEvent {
 				return "MSG_FINDNODE";
 			case MSG_ROUTE:
 				return "MSG_FINDVALUE";
-			case  MSG_RESPONSE:
-				return  "MSG_ROUTE_RESPONSE";
+			case MSG_RESPONSE:
+				return "MSG_RESPONSE";
+			case MSG_STORE_REQUEST:
+				return "MSG_STORE_REQUEST";
+			case MSG_STORE_RESP:
+				return "MSG_STORE_RESP";
+			case MSG_FINDVALUE_REQ:
+				return " MSG_FINDVALUE_REQ";
+			case MSG_FINDVALUE:
+				return "MSG_FINDVALUE";
+			case MSG_RETURNVALUE:
+				return "MSG_RETURNVALUE";
+			case MSG_STORE_SPACE_REQ:
+				return "MSG_STORE_SPACE_REQ";
+			case MSG_STORE_SPACE_RESP:
+				return "MSG_STORE_SPACE_RESP";
+			case MSG_RETURNVALUE_FROM_CACHE:
+				return "MSG_RETURNVALUE_FROM_CACHE";
+	
 			default:
 				return "UNKNOW:" + type;
 		}
