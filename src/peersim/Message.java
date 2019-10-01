@@ -117,7 +117,7 @@ public class Message extends SimpleEvent {
 
 	/**
 	 * Recipient address of the message
-	 * in find operation this is either the nodeId or the key that we wantto find closest nodes to it
+	 * in find operation this is either the nodeId or the key that we want to find closest nodes to it. <br>
 	 */
 	public BigInteger dest;
 
@@ -235,7 +235,7 @@ public class Message extends SimpleEvent {
 		dolly.src = this.src;
 		dolly.dest = this.dest;
 		dolly.operationId = this.operationId;
-		// FIXME this shoud be deep clone not adding a reference only
+		// FIXME this shoud be deep clone not adding a reference only (for now its ok)
 		dolly.body = this.body; // deep cloning?
 
 		return dolly;
@@ -251,7 +251,7 @@ public class Message extends SimpleEvent {
 			case MSG_FINDNODE:
 				return "MSG_FINDNODE";
 			case MSG_ROUTE:
-				return "MSG_FINDVALUE";
+				return "MSG_ROUTE";
 			case MSG_RESPONSE:
 				return "MSG_RESPONSE";
 			case MSG_STORE_REQUEST:
@@ -259,7 +259,7 @@ public class Message extends SimpleEvent {
 			case MSG_STORE_RESP:
 				return "MSG_STORE_RESP";
 			case MSG_FINDVALUE_REQ:
-				return " MSG_FINDVALUE_REQ";
+				return "MSG_FINDVALUE_REQ";
 			case MSG_FINDVALUE:
 				return "MSG_FINDVALUE";
 			case MSG_RETURNVALUE:
