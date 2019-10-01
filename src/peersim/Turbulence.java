@@ -96,7 +96,7 @@ public class Turbulence implements Control {
 			System.err.println("Wrong event probabilty in Turbulence class: the probability PAR_ADD must be between 0 and 1");
 		} else if (p_rem < 0 || p_rem > 1) {
 			System.err.println("Wrong event probabilty in Turbulence class: the probability PAR_REM must be between 0 and 1");
-		} else if (p_idle + p_add + p_idle > 1) {
+		} else if (p_idle + p_add + p_rem > 1) {
 			System.err.println("Wrong event probabilty in Turbulence class: the sum of PAR_IDLE, PAR_ADD and PAR_REM must be 1");
 		}
 
