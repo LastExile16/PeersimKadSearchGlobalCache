@@ -1,6 +1,7 @@
 package peersim;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TreeMap;
 
@@ -23,6 +24,18 @@ public class FindOperation {
 	 */
 	public long operationId;
 
+	/**
+	 * parent contains the hash of the whole (original) issued query before dividing it into sub keywords. <br>
+	 * used in multi keyword query to recognize the parts of the same query and merge the result.
+	 * value = null: the search is single word
+	 * value != null: search is multi keyword 
+	 */
+	public BigInteger parent;
+	
+	/**
+	 * keywords contains the original sub keywords. this helps us to find the relating keywords to a #parent variable.
+	 */
+	public BigInteger[] keywords;
 	/**
 	 * Id of the node to find
 	 */
@@ -56,9 +69,10 @@ public class FindOperation {
 
 	//test
 	protected TreeMap<BigInteger,Integer> nodeSpace = new TreeMap<>();
-
+	
+	 
 	/**
-	 * defaul constructor
+	 * default constructor
 	 * 
 	 * @param destNode
 	 *            Id of the node to find
@@ -75,6 +89,9 @@ public class FindOperation {
 
 		// initialize closestSet
 		closestSet = new HashMap<BigInteger, Boolean>();
+		
+		// query operations are single keyword by default. no parent
+		parent = null;
 	}
 
 	/**
@@ -153,4 +170,18 @@ public class FindOperation {
 		return res;
 	}
 
+	@Override
+	public String toString() {
+		return "FindOperation \n[operationId=" + operationId + ",\n" +
+				"parent=" + parent + ",\n" +
+				"keywords=" + Arrays.toString(keywords) + ",\n" +
+				"destNode=" + destNode + ",\n" +
+				"body=" + body + ",\n" +
+				"available_requests=" + available_requests + ",\n" +
+				"timestamp=" + timestamp + ",\n" +
+				"nrHops=" + nrHops + ",\n" +
+				"closestSet=" + closestSet + ",\n" +
+				"nodeSpace=" + nodeSpace + "]";
+	}
+	
 }

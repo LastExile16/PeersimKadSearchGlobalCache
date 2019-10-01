@@ -9,8 +9,11 @@ import peersim.edsim.EDSimulator;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
 
 
 /**
@@ -45,7 +48,7 @@ public static int i=0;
 	 * @return
      */
 	//______________________________________________________________________________________________
-	private Message generateFindValueMessage(){
+	/*private Message generateFindValueMessage(){
 		
 		int retry = 0;
 		while(retry<10) {
@@ -77,7 +80,25 @@ public static int i=0;
 			}
 		}
 		return null;
-	}
+	}*/
+	
+	/**
+	 * Combination method find all possible combinations of the elements of a list
+	 * @param list - The list to find combinations of
+	 * @param len - The number of combinations to try (2: AB, AC, AD, BC, BD, CD / 3: ABC, ABD, ACD, BCD)
+	 * @param startPosition - starting point (0: start from first character)
+	 * @param result - The array to hold combinations at each iteration
+	 */
+	private void combinations(List<?> list, int len, int startPosition, BigInteger[] result){
+        if (len == 0){
+            // System.out.println(Arrays.toString(result));
+            return;
+        }       
+        for (int i = startPosition; i <= list.size()-len; i++){
+            result[result.length - len] = (BigInteger) list.get(i);
+            combinations(list, len-1, i+1, result);
+        }
+    }
 	
 	/**
 	 * generating queries according to the frequency of the keyword in the original dataset that is according to the weight of each keyword
@@ -92,20 +113,61 @@ public static int i=0;
 				rc.add(entry.getValue(), entry.getKey());
 			}
 		}
-		// get a random key
-		BigInteger key = rc.next();
-		if(issuedQuery.containsKey(key)) {
-			//++KademliaObserver.h;
-			issuedQuery.put(key, issuedQuery.get(key)+1);
-		}else {
-			issuedQuery.put(key, 0);
+		
+		BigInteger key = null;
+		BigInteger multi_key_q_hash = null;
+		String multi_key_q_str = "";
+		// make sure to get more than one random key:
+		// int r_no_of_keys = CommonState.r.nextInt(2)+2;
+		int r_no_of_keys = CommonState.r.nextInt(1)+3;
+		// int r_no_of_keys = CommonState.r.nextInt(1)+1;
+		// System.err.println(r_no_of_keys);
+		List<BigInteger> multi_keys_q_arr = new ArrayList<BigInteger>();
+		while(r_no_of_keys>0) {
+			// get a random key
+			key = rc.next();
+			multi_keys_q_arr.add(key);
+			multi_key_q_str += key.toString();
+			r_no_of_keys--;
+		}
+		// Sorting: since the values have same length, I'll get the correct sort even they are stored as strings not integers
+		Collections.sort(multi_keys_q_arr);
+		
+		// get all combinations to check for partial results (I may move this check to KademliaProtocol.find() method)
+		combinations(multi_keys_q_arr, 2, 0, new BigInteger[2]);
+		
+		try {
+			// hash the new combined query
+			multi_key_q_hash = new BigInteger(SHA1.shaEncode(multi_key_q_str), 16);
+			// System.out.println(multi_key_q_hash);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		
-		Message m = Message.makeFindValue(key);
+		// does the query issued before.
+		if(issuedQuery.containsKey(multi_key_q_hash)) {
+			//++KademliaObserver.h;
+			issuedQuery.put(multi_key_q_hash, issuedQuery.get(multi_key_q_hash)+1);
+		}else {
+			issuedQuery.put(multi_key_q_hash, 0);
+		}
+		
+		Message m = Message.makeFindValue((BigInteger[])multi_keys_q_arr.toArray(new BigInteger[multi_keys_q_arr.size()]));
 		//System.out.print(m.body+" rand: " + rand+" - ");
 		m.timestamp = CommonState.getTime();
-		m.dest = key;
 		
+		/*
+		 * originally the m.dest is used to find out the closest node to the given value, 
+		 * but since I've added multikeyword query, first I generate an array of keys and store it in m.body
+		 * then store the combined hash in the m.dest.
+		 * after that in the KademliaProtocol.find() I create different messages for each of the values in the m.body then make the
+		 * new messages' destination to be that value. So whatever I give here to the m.dest it won't affect the followup processes
+		 */
+		m.dest = multi_key_q_hash;
+		// System.out.println(key);
+		// System.exit(1);
+		//m.body = key;
+		//m.dest = key;
 		return m;
 	}
 	
