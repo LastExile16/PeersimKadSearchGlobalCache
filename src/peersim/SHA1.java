@@ -18,6 +18,12 @@ import joinery.DataFrame;
  *
  */
 public  class SHA1 {
+	/**
+	 * Encode the given string with SHA-1
+	 * @param  the string to be encoded 
+	 * @return the encoded string
+	 * @throws Exception
+	 */
     public static String shaEncode(String inStr) throws Exception {
         MessageDigest sha = null;
         try {
