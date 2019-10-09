@@ -118,8 +118,8 @@ public static int i=0;
 		BigInteger multi_key_q_hash = null;
 		String multi_key_q_str = "";
 		// make sure to get more than one random key:
-		// int r_no_of_keys = CommonState.r.nextInt(2)+2;
-		int r_no_of_keys = CommonState.r.nextInt(1)+3;
+		int r_no_of_keys = CommonState.r.nextInt(2)+2;
+		//int r_no_of_keys = CommonState.r.nextInt(1)+2;
 		// int r_no_of_keys = CommonState.r.nextInt(1)+1;
 		// System.err.println(r_no_of_keys);
 		List<BigInteger> multi_keys_q_arr = new ArrayList<BigInteger>();
@@ -127,11 +127,14 @@ public static int i=0;
 			// get a random key
 			key = rc.next();
 			multi_keys_q_arr.add(key);
-			multi_key_q_str += key.toString();
+			//multi_key_q_str += key.toString();
 			r_no_of_keys--;
 		}
 		// Sorting: since the values have same length, I'll get the correct sort even they are stored as strings not integers
 		Collections.sort(multi_keys_q_arr);
+		for(BigInteger k : multi_keys_q_arr) {
+			multi_key_q_str += k.toString();
+		}
 		
 		// get all combinations to check for partial results (I may move this check to KademliaProtocol.find() method)
 		combinations(multi_keys_q_arr, 2, 0, new BigInteger[2]);
@@ -142,14 +145,6 @@ public static int i=0;
 			// System.out.println(multi_key_q_hash);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-		
-		// does the query issued before.
-		if(issuedQuery.containsKey(multi_key_q_hash)) {
-			//++KademliaObserver.h;
-			issuedQuery.put(multi_key_q_hash, issuedQuery.get(multi_key_q_hash)+1);
-		}else {
-			issuedQuery.put(multi_key_q_hash, 0);
 		}
 		
 		Message m = Message.makeFindValue((BigInteger[])multi_keys_q_arr.toArray(new BigInteger[multi_keys_q_arr.size()]));
@@ -168,6 +163,14 @@ public static int i=0;
 		// System.exit(1);
 		//m.body = key;
 		//m.dest = key;
+		// does the query issued before.
+		if(KademliaObserver.overallIssuedQueries.containsKey(multi_key_q_hash)) {
+			KademliaObserver.overallIssuedQueries.put(multi_key_q_hash, KademliaObserver.overallIssuedQueries.get(multi_key_q_hash)+1);
+			KademliaObserver.duplicateQuery.add(1);
+		}else {
+			KademliaObserver.overallIssuedQueries.put(multi_key_q_hash, 0);
+		}
+		
 		return m;
 	}
 	

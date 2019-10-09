@@ -27,7 +27,7 @@ import peersim.transport.UnreliableTransport;
 
 //__________________________________________________________________________________________________
 public class KademliaProtocol implements Cloneable, EDProtocol {
-	private int cacheCapacity = 20;
+	private int cacheCapacity = 2000;
 	// VARIABLE PARAMETERS
 	final String PAR_K = "K";
 	final String PAR_ALPHA = "ALPHA";
@@ -489,12 +489,13 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 			if(this.cache.member(key)){
 				locallyAvailable = true;
 				KademliaObserver.cacheHitPerMsg.add(1);
-				KademliaObserver.cacheMissPerMsg.add(1);
 				sendValueFromCache(m, myPid);
+				//System.exit(22);
 				return;
 			}
 		} 
 		if (!locallyAvailable) {
+			KademliaObserver.cacheMissPerMsg.add(1);
 			// get the ALPHA closest node to destNode
 			// - Returns the K known nodes closest to the target node
 			BigInteger[] neighbours = this.routingTable.getNeighbours(m.dest, m.src);
@@ -551,11 +552,12 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 				fop.nrHops++;
 			}
 			//System.out.println(m.copy());
+			/*
 			try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("out.txt", true)))) {
 			    out.println(m.copy().toString()+"------------------------------\n\n");
 			}catch (IOException e) {
 			    System.err.println(e);
-			}
+			}*/
 		}
 		
 	}
@@ -575,52 +577,71 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		//System.out.println(mBodyArr.length);
 		//System.out.println(mBodyArr[0]);
 		//System.exit(1);
+		/**
+		 * check whether the requested key is cached by someone or not?
+		 */
 		
-		for(int i=0, msgLength=mBodyArr.length; i<msgLength; i++) {
-			FindOperation fop = new FindOperation(mBodyArr[i], m.timestamp);
-			fop.body = mBodyArr[i];
-			fop.keywords = mBodyArr;
-			if(msgLength>1) {
-				// m.dest contains the combined keyword hash
-				fop.parent = m.dest;
-			}
+		//if(KademliaObserver.staticHashMap.containsKey(m.dest))
+		//if(false)
+		if(KademliaObserver.staticHashTable.contains(m.dest.toString()))
+		{
 			
-			allIssuedfindOps.put(fop.operationId, fop);
-
-			// get the ALPHA closest node to srcNode and add to find operation
-			// get up to K closest nodes to the srcNode (or to a key) and add to find operation
-			BigInteger[] neighbours = this.routingTable.getNeighbours(mBodyArr[i], this.nodeId);
-			fop.elaborateResponse(neighbours);
-			fop.available_requests = KademliaCommonConfig.ALPHA;
+			/*
+			 * I can say m.body = m.dest
+			 * but I wanted to create an independent object not a mere reference.
+			 */
+			m.body = new BigInteger(m.dest.toString());
+			//System.out.println(m.body);
+			//System.out.println(m.dest);
+			//System.out.println(((BigInteger)m.body).equals(((BigInteger)m.dest)));
+			find(m, myPid);
+		}else {
 			
-			// set message operation id，
-			// - Forward information
-			m.operationId = fop.operationId;
-			m.type = Message.MSG_ROUTE;
-			m.src = this.nodeId;
-
-			// send ALPHA messages
-			for (int a = 0; a < KademliaCommonConfig.ALPHA; a++) {
-				BigInteger nextNode = fop.getNeighbour(); // get the first neighbor in closest set which has not been
-														// already queried
-				Message pendingMessage = null;
-				if (nextNode != null) {
-					pendingMessage = m.copy();
-					pendingMessage.body = mBodyArr[i];
-					pendingMessage.dest = mBodyArr[i];
-					sendMessage(pendingMessage, nextNode, myPid);
-					fop.nrHops++;
+			for(int i=0, msgLength=mBodyArr.length; i<msgLength; i++) {
+				FindOperation fop = new FindOperation(mBodyArr[i], m.timestamp);
+				fop.body = mBodyArr[i];
+				fop.keywords = mBodyArr;
+				if(msgLength>1) {
+					// m.dest contains the combined keyword hash
+					fop.parent = m.dest;
 				}
 				
-				//System.out.println(pendingMessage);
-				/*try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("out2.txt", true)))) {
-				    out.println(pendingMessage+"------------------------------\n\n");
-				}catch (IOException e) {
-				    System.err.println(e);
-				}*/
+				allIssuedfindOps.put(fop.operationId, fop);
+	
+				// get the ALPHA closest node to srcNode and add to find operation
+				// get up to K closest nodes to the srcNode (or to a key) and add to find operation
+				BigInteger[] neighbours = this.routingTable.getNeighbours(mBodyArr[i], this.nodeId);
+				fop.elaborateResponse(neighbours);
+				fop.available_requests = KademliaCommonConfig.ALPHA;
+				
+				// set message operation id，
+				// - Forward information
+				m.operationId = fop.operationId;
+				m.type = Message.MSG_ROUTE;
+				m.src = this.nodeId;
+	
+				// send ALPHA messages
+				for (int a = 0; a < KademliaCommonConfig.ALPHA; a++) {
+					BigInteger nextNode = fop.getNeighbour(); // get the first neighbor in closest set which has not been
+															// already queried
+					Message pendingMessage = null;
+					if (nextNode != null) {
+						pendingMessage = m.copy();
+						pendingMessage.body = mBodyArr[i];
+						pendingMessage.dest = mBodyArr[i];
+						sendMessage(pendingMessage, nextNode, myPid);
+						fop.nrHops++;
+					}
+					
+					//System.out.println(pendingMessage);
+					/*try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("out2.txt", true)))) {
+					    out.println(pendingMessage+"------------------------------\n\n");
+					}catch (IOException e) {
+					    System.err.println(e);
+					}*/
+				}
 			}
 		}
-
 	}
 
 	/**
@@ -875,12 +896,18 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 					}
 					
 					if(searchFinished) {
+						KademliaObserver.h++;
 						//allValues = (HashSet<String>) searchResults.get(fop.keywords[0]); //creates a reference not new obj
 						allValues = new HashSet<String>((Set<String>) searchResults.get(fop.keywords[0]));
-						for(BigInteger key: fop.keywords) { 
-							allValues.retainAll((HashSet<String>) searchResults.get(key));
+						for(int x=1; x<fop.keywords.length; x++) { 
+							allValues.retainAll((HashSet<String>) searchResults.get(fop.keywords[x]));
 						}
-						
+						/*if(!allValues.isEmpty()) {
+							//System.out.println(allValues);
+							//System.out.println("Fisnish");
+							//System.exit(1);
+							KademliaObserver.h++;
+						}*/
 						searchResults.put(fop.parent, allValues);
 						storeResultInCache(fop.parent, allValues);
 						KademliaObserver.findVal_success.add(1);
@@ -893,12 +920,13 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 //						System.out.println(searchResults.get(fop.keywords[0]));
 //						System.out.println("-----------------");
 						//System.exit(1);
+					
 					}
 					
 				}else {
 					
 					storeResultInCache(receKey, receVal);
-					
+					//System.exit(1);
 					KademliaObserver.findVal_success.add(1);
 					long timeInterval = (CommonState.getTime()) - (m.timestamp);
 					// System.out.println( ++KademliaObserver.h + "- " + timeInterval + " : " + m.nrHops);
@@ -914,8 +942,9 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 	 * without following proper DHT steps bcz we are not interested in knowing the bandwidth cost or time cost of this process.
 	 * @param receKey <br>The searched keyword
 	 * @param receVal <br>The received result set
-	 */
+	 */static int maxSize = 1397; // max number of cache when 2 keywords used in queries raised to 2524 when [2-3] keywords are used
 	public void storeResultInCache(BigInteger receKey, Set<String> receVal) {
+		this.cache.set(receKey, receVal);
 		BigInteger[] kClosestNodeIds = KademliaObserver.supernode.routingTable.getNeighbours2(receKey, KademliaObserver.supernode.getNodeId());
 		for (BigInteger closeNodeId : kClosestNodeIds) {
 			Node tmp = nodeIdtoNode(closeNodeId);
@@ -924,8 +953,32 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 			}
 			KademliaProtocol closeNodeKad = (KademliaProtocol) tmp.getProtocol(kademliaid);
 			closeNodeKad.cache.set(receKey, receVal);
-			// System.out.println(closeNodeKad.cache.getSize());
+			
+			if(closeNodeKad.cache.getSize()>maxSize) {
+				maxSize=closeNodeKad.cache.getSize();
+				System.out.print(maxSize+"-");
+				
+			}
+			
+			/*
+			 * TODO - what we should do is something like this
+			 * closNodeKad.cuckooHashMap.put(receKey, receVal.toString());
+			 * then broadcast the update to all other nodes in the network by
+			 * closNodeKad.broadcastHashMap();
+			 * 
+			 * public void broadcastHashMapUpdate() {
+			 *  Message broadcast = makeHashMapUpdateRequest([recekey, receValeu]);
+			 * 	sendMessage(broadcast, allNeighborNodes)
+			 * }
+			 * 
+			 * public static final Message makeHashMapUpdateRequest(Object  body){
+			 *	return new Message(MSG_BROADCASTHASHMAPUPDATE_REQ, body);
+			 *}
+			 */
 		}
+		// update the hash map to show that the query "recekey" is cached. 
+		//KademliaObserver.staticHashMap.put(receKey, receVal.toString());
+		KademliaObserver.staticHashTable.insert(receKey.toString());
 	}
 
 	/**
@@ -955,7 +1008,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 		if((Set<String>)searchResults.get(receKey) == null || !((Set<String>)searchResults.get(receKey)).containsAll(receVal)) {
 		//if (!receivedVals.contains(receVal)) {
 			searchResults.put(receKey, receVal);
-			System.exit(12);
+			// System.exit(12);
 			storeResultInCache(receKey, receVal);
 			KademliaObserver.findVal_success.add(1);
 			KademliaObserver.cacheHitPerQuery.add(1);
@@ -1098,14 +1151,16 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 			// the m.body holds the array of keys while the m.dest holds the the combined keyword hash value
 			if (!cache.member(m.dest) ) {
 				searchResults.put(m.dest, null);
-				findValue(m, myPid);
 				// XXX - the stdout is only for debugging
 				// System.err.println("Again This node:" + this.nodeId + "'s foundedVals:" + this.findVals+"\n");
 				KademliaObserver.findVal_times.add(1);
+				findValue(m, myPid);
+				//find(m, myPid);
+				
 			} else {
 				KademliaObserver.cacheHitPerMsg.add(1);
 				KademliaObserver.cacheHitPerQuery.add(1);
-				// System.out.println("available on local cache: " + m.body);
+				//System.out.println("available on local cache: " + m.dest);
 			}
 			break;
 

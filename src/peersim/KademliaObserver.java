@@ -1,10 +1,7 @@
 package peersim;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.math.BigInteger;
+import java.util.HashMap;
 
 import peersim.config.Configuration;
 import peersim.core.CommonState;
@@ -142,6 +139,11 @@ public static int h=0;
 	public static BigInteger supernodeId = new BigInteger(KademliaCommonConfig.BITS, CommonState.r);
 	public static KademliaProtocol supernode = new KademliaProtocol(supernodeId);
 	
+	public static CuckooHashMap<BigInteger, String> staticHashMap = new CuckooHashMap<>();
+	public static  CuckooHashTable<String> staticHashTable = new CuckooHashTable<>( new StringHashFamily( 2 ) );
+	
+	public static HashMap<BigInteger, Integer>overallIssuedQueries = new HashMap<>();
+	public static IncrementalStats duplicateQuery = new IncrementalStats();
 	/** Parameter of the protocol we want to observe */
 	private static final String PAR_PROT = "protocol";
 
@@ -177,8 +179,8 @@ public static int h=0;
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d average no. of msgs per search] [%d closeNodeValExpected sum]  [%d closeNodeHadVal sum]  [%d overloadNode sum] [%d findValueTimes sum] [%d findValueSuccess] [%d realStoreOperation] [%d realStoreFailOperation] [%d cachHit sum] [%d storageHit sum]",
 				CommonState.getTime(), sz,(int)hopFindValue.getAverage(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum(), (int)cacheHit.getSum(), (int)storageHit.getSum());
 		*/
-		String s = String.format("[%d time]:[%d current nodes UP] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
-				CommonState.getTime(), sz, (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
+		String s = String.format("[%d time]:[%d searchFinished] [%d duplicateQuery] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
+				CommonState.getTime(), h, (int)duplicateQuery.getSum(), (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
 		
 		/* not useful for now
 		if (CommonState.getTime() == 3500000) {
@@ -211,7 +213,14 @@ public static int h=0;
 		System.out.println("rt: "+supernode.routingTable.toString());*/
 		
 		System.err.println(s);
-
+		/*if(CommonState.getTime()==3600000) {
+			//System.err.println(staticHashMap);
+			try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("out.txt", true)))) {
+			    out.println(overallIssuedQueries+"------------------------------\n\n");
+			}catch (IOException e) {
+			    System.err.println(e);
+			}
+		}*/
 		return false;
 	}
 }
