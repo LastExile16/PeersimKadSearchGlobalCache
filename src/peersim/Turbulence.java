@@ -88,7 +88,7 @@ public class Turbulence implements Control {
 		p_idle = Configuration.getDouble(this.prefix + "." + PAR_IDLE, 0); // idle default 0
 		p_add = Configuration.getDouble(this.prefix + "." + PAR_ADD, 0.5); // add default 0.5
 		p_rem = Configuration.getDouble(this.prefix + "." + PAR_REM, 0.5); // add default 0.5
-
+		System.err.println("Network size: " + Network.size());
 		// check probability values
 		if (p_idle < 0 || p_idle > 1) {
 			System.err.println("Wrong event probabilty in Turbulence class: the probability PAR_IDLE must be between 0 and 1");

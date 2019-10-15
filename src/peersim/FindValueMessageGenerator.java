@@ -83,24 +83,6 @@ public static int i=0;
 	}*/
 	
 	/**
-	 * Combination method find all possible combinations of the elements of a list
-	 * @param list - The list to find combinations of
-	 * @param len - The number of combinations to try (2: AB, AC, AD, BC, BD, CD / 3: ABC, ABD, ACD, BCD)
-	 * @param startPosition - starting point (0: start from first character)
-	 * @param result - The array to hold combinations at each iteration
-	 */
-	private void combinations(List<?> list, int len, int startPosition, BigInteger[] result){
-        if (len == 0){
-            // System.out.println(Arrays.toString(result));
-            return;
-        }       
-        for (int i = startPosition; i <= list.size()-len; i++){
-            result[result.length - len] = (BigInteger) list.get(i);
-            combinations(list, len-1, i+1, result);
-        }
-    }
-	
-	/**
 	 * generating queries according to the frequency of the keyword in the original dataset that is according to the weight of each keyword
 	 * @return  Message
 	 * 		The randomly chosen message
@@ -118,14 +100,25 @@ public static int i=0;
 		BigInteger multi_key_q_hash = null;
 		String multi_key_q_str = "";
 		// make sure to get more than one random key:
-		int r_no_of_keys = CommonState.r.nextInt(2)+2;
-		//int r_no_of_keys = CommonState.r.nextInt(1)+2;
+		// int r_no_of_keys = CommonState.r.nextInt(2)+2; // 2 or 3
+		int r_no_of_keys = CommonState.r.nextInt(3)+1; // 1 or 2 or 3
 		// int r_no_of_keys = CommonState.r.nextInt(1)+1;
 		// System.err.println(r_no_of_keys);
 		List<BigInteger> multi_keys_q_arr = new ArrayList<BigInteger>();
 		while(r_no_of_keys>0) {
 			// get a random key
 			key = rc.next();
+			//don't select the same key again in the same query
+			/*
+			 * If I want to consider duplicate keys in the same query, then I have to confirm the following:
+			 * 1- searchResult uses key to find out if search is finished or not, so when we have 2 keys in a query
+			 * 		and both of them are the same, then we don't need to send two FOP s (unless we practically check the
+			 * 		content of the dataset)
+			 * 2- findValue() should also consider this situation since we have checking to find out the element. 
+			 */
+			if(multi_keys_q_arr.contains(key)) {
+				continue;
+			}
 			multi_keys_q_arr.add(key);
 			//multi_key_q_str += key.toString();
 			r_no_of_keys--;
@@ -135,9 +128,6 @@ public static int i=0;
 		for(BigInteger k : multi_keys_q_arr) {
 			multi_key_q_str += k.toString();
 		}
-		
-		// get all combinations to check for partial results (I may move this check to KademliaProtocol.find() method)
-		combinations(multi_keys_q_arr, 2, 0, new BigInteger[2]);
 		
 		try {
 			// hash the new combined query

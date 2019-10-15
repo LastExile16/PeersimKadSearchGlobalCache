@@ -98,7 +98,10 @@ public static int h=0;
 	 * keep statistic of the number of times a node had the value and returned it (the close node had the value as expected)
 	 */
 	public static IncrementalStats closeNodeHadVal = new IncrementalStats();
-	
+	/**
+	 * keep statistic of the number of times a node doesn't have the value as expected
+	 */
+	public static IncrementalStats closeNodeNoVal = new IncrementalStats();
 	/**
 	 * keep statistic of the number of cache hit (i.e. when searched kv is cached)
 	 */
@@ -144,6 +147,7 @@ public static int h=0;
 	
 	public static HashMap<BigInteger, Integer>overallIssuedQueries = new HashMap<>();
 	public static IncrementalStats duplicateQuery = new IncrementalStats();
+	
 	/** Parameter of the protocol we want to observe */
 	private static final String PAR_PROT = "protocol";
 
@@ -179,8 +183,8 @@ public static int h=0;
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d average no. of msgs per search] [%d closeNodeValExpected sum]  [%d closeNodeHadVal sum]  [%d overloadNode sum] [%d findValueTimes sum] [%d findValueSuccess] [%d realStoreOperation] [%d realStoreFailOperation] [%d cachHit sum] [%d storageHit sum]",
 				CommonState.getTime(), sz,(int)hopFindValue.getAverage(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum(), (int)cacheHit.getSum(), (int)storageHit.getSum());
 		*/
-		String s = String.format("[%d time]:[%d searchFinished] [%d duplicateQuery] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
-				CommonState.getTime(), h, (int)duplicateQuery.getSum(), (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
+		String s = String.format("[%d time]:[%d no data found] [%d duplicateQuery] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
+				CommonState.getTime(), (int)closeNodeNoVal.getSum(), (int)duplicateQuery.getSum(), (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
 		
 		/* not useful for now
 		if (CommonState.getTime() == 3500000) {
