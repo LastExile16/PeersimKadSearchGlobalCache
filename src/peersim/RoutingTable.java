@@ -2,6 +2,7 @@ package peersim;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -82,8 +83,19 @@ public class RoutingTable implements Cloneable {
 
 		// else get k closest node from all k-buckets
 		prefix_len = 0;
-		while (prefix_len < KademliaCommonConfig.ALPHA) {  // Add some nodeID to the candidate list
+		/*
+		 while (prefix_len < KademliaCommonConfig.ALPHA) {  // Add some nodeID to the candidate list
 			neighbour_candidates.addAll(k_buckets.get(prefix_len).neighbours.keySet());
+			// remove source id
+			neighbour_candidates.remove(src);
+			prefix_len++;
+		}
+		 */
+		/* it maybe better to start at k-th closest bucket and onward instead taking all of the nodes
+		 * in this case start at prefix_len th bucket
+		 */
+		for (Map.Entry<Integer, KBucket> entry : k_buckets.entrySet()) { // prev solution was until ALPHA but why? it should be all of the nodes in all buckets
+			neighbour_candidates.addAll(entry.getValue().neighbours.keySet());
 			// remove source id
 			neighbour_candidates.remove(src);
 			prefix_len++;
@@ -101,6 +113,8 @@ public class RoutingTable implements Cloneable {
 			if (i < KademliaCommonConfig.K) {
 				result[i] = distance_map.get(iii);
 				i++;
+			}else {
+				break; //stop looping through the rest of the candidate neighbors
 			}
 		}
 
@@ -109,7 +123,7 @@ public class RoutingTable implements Cloneable {
 
 	////// special and temporary method
 	/**
-	 *  return the closest neighbour to a key from the correct k-bucket, only used in the dataset distribution
+	 *  return the closest neighbour to a key from the correct k-bucket, only used in the dataset distribution <br>
 	 *  the part to return all of the bucket at once is remove so that the code will check the limited closest nodes
 	 * @param key
 	 * 			K-nodes must be close to 'key'
