@@ -9,8 +9,9 @@ import java.util.TreeMap;
  * This class represents a find operation and offer the methods needed to maintain and update the closest set.<br>
  * It also maintains the number of parallel requsts that can has a maximum of ALPHA.
  * 
- * @author Daniele Furlan, Maurizio Bonani
+ * @author Daniele Furlan, Maurizio Bonani, Nawras Nazar
  * @version 1.0
+ * 
  */
 public class FindOperation {
 
@@ -50,7 +51,13 @@ public class FindOperation {
 	 * number of available find request message to send (it must be always less than ALPHA)
 	 */
 	public int available_requests;
-
+	
+	/**
+	 * number of outstanding messages sent to get the result of a query from the nodes in the {@link #closestSet}
+	 * increased when message sent {@link peersim.Message#MSG_FINDVALUE} and decreased when receiving the answer {@link peersim.Message#MSG_RETURNVALUE} or {@link peersim.Message#MSG_RETURNVALUE_FROM_CACHE}
+	 *  
+	 */
+	public int outstanding_find_requests;
 	/**
 	 * Start timestamp of the search operation
 	 */
@@ -86,7 +93,10 @@ public class FindOperation {
 
 		// set availabe request to ALPHA
 		available_requests = KademliaCommonConfig.ALPHA;
-
+		
+		// set outstanding messages to 0 (no outstanding messages yet)
+		outstanding_find_requests = 0;
+		
 		// initialize closestSet
 		closestSet = new HashMap<BigInteger, Boolean>();
 		
@@ -125,9 +135,11 @@ public class FindOperation {
 							}
 						}
 						//将最长距离节点移除，并将新的neighbor加入closeSet
+						//Remove the longest distance node and add the new neighbor to the closeSet
 						if (nodemaxdist.compareTo(n) != 0) {
 							closestSet.remove(nodemaxdist);
 							closestSet.put(n, false);
+							System.out.println("new neighbor added");
 						}
 					}
 				}
