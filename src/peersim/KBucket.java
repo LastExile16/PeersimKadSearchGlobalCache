@@ -27,6 +27,10 @@ public class KBucket implements Cloneable {
 		if (neighbours.size() < KademliaCommonConfig.K) { // k-bucket isn't full
 			neighbours.put(node, time); // add neighbour to the tail of the list
 		}
+		/*else {
+			//System.out.println("the received closest node to a hash couldn't be added to neighbors list: " + node);
+			KademliaObserver.closeNodeNotAdded.add(1);
+		}*/
 	}
 
 	// remove a neighbour from this k-bucket
