@@ -57,7 +57,7 @@ public class RoutingTable implements Cloneable {
 	}
 
 	/**
-	 *  return the closest neighbour to a key from the correct k-bucket
+	 *  return the closest neighbor to a key from the correct k-bucket
 	 * @param key
 	 * 			K-nodes must be close to 'key'
 	 * @param src
@@ -66,10 +66,10 @@ public class RoutingTable implements Cloneable {
 	 * 			List of K closest nodeIds from the correct k-bucket
 	 */
 	public BigInteger[] getNeighbours(final BigInteger key, final BigInteger src) {
-		// resulting neighbours
+		// resulting neighbors
 		BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
 
-		// neighbour candidates
+		// Neighbor candidates
 		ArrayList<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
 
 		// get the length of the longest common prefix
@@ -82,9 +82,10 @@ public class RoutingTable implements Cloneable {
 		}
 
 		// else get k closest node from all k-buckets
-		prefix_len = 0;
+		
+		//prefix_len = 0;
 		/*
-		 while (prefix_len < KademliaCommonConfig.ALPHA) {  // Add some nodeID to the candidate list
+		 while (prefix_len < KademliaCommonConfig.ALPHA) {  // commonConfig.BITS is more correct.
 			neighbour_candidates.addAll(k_buckets.get(prefix_len).neighbours.keySet());
 			// remove source id
 			neighbour_candidates.remove(src);
@@ -98,7 +99,7 @@ public class RoutingTable implements Cloneable {
 			neighbour_candidates.addAll(entry.getValue().neighbours.keySet());
 			// remove source id
 			neighbour_candidates.remove(src);
-			prefix_len++;
+			//prefix_len++;
 		}
 
 		// create a map (distance, node)
@@ -123,7 +124,7 @@ public class RoutingTable implements Cloneable {
 
 	////// special and temporary method
 	/**
-	 *  return the closest neighbour to a key from the correct k-bucket, only used in the dataset distribution <br>
+	 *  return the closest neighbor to a key from the correct k-bucket, only used in the dataset distribution <br>
 	 *  the part to return all of the bucket at once is remove so that the code will check the limited closest nodes
 	 * @param key
 	 * 			K-nodes must be close to 'key'
@@ -133,22 +134,20 @@ public class RoutingTable implements Cloneable {
 	 * 			List of K closest nodeIds from the correct k-bucket
 	 */
 	public BigInteger[] getNeighbours2(final BigInteger key, final BigInteger src) {
-		// resulting neighbours
+		// resulting neighbors
 		BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
 
-		// neighbour candidates
+		// Neighbor candidates
 		ArrayList<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
 
-		// get the length of the longest common prefix
-		//Calculate the common prefix length of the target node and the current node to determine which bucket is located in the kbuckets
-		int prefix_len = Util.prefixLen(nodeId, key);//计算目标节点与当前节点的共同前缀长确定kbuckets中位于哪个桶中
-		// else get k closest node from all k-buckets
-		prefix_len = 0;
-		while (prefix_len < KademliaCommonConfig.BITS) {  // Add some nodeID to the candidate list
-			neighbour_candidates.addAll(k_buckets.get(prefix_len).neighbours.keySet());
+		
+		// get k closest node from all k-buckets
+		//int prefix_len = 0;
+		for (Map.Entry<Integer, KBucket> entry : k_buckets.entrySet()) { // prev solution was until ALPHA but why? it should be all of the nodes in all buckets
+			neighbour_candidates.addAll(entry.getValue().neighbours.keySet());
 			// remove source id
 			neighbour_candidates.remove(src);
-			prefix_len++;
+			//prefix_len++;
 		}
 
 		// create a map (distance, node)
