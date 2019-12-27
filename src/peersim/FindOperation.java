@@ -34,6 +34,12 @@ public class FindOperation {
 	public BigInteger parent;
 	
 	/**
+	 * the starting time for the search operation. 
+	 * queryTime = max(completion time of Ki) - min(start time of Ki) for i to n
+	 * where Ki is the subquery for keyword i if Q=K1^K2^K3... 
+	 */
+	public long startingTime;
+	/**
 	 * keywords contains the original sub keywords. this helps us to find the relating keywords to a #parent variable.
 	 */
 	public BigInteger[] keywords;
@@ -139,7 +145,7 @@ public class FindOperation {
 						if (nodemaxdist.compareTo(n) != 0) {
 							closestSet.remove(nodemaxdist);
 							closestSet.put(n, false);
-							System.out.println("new neighbor added");
+							//System.out.println("new neighbor added");
 						}
 					}
 				}

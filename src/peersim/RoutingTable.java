@@ -98,10 +98,9 @@ public class RoutingTable implements Cloneable {
 		for (Map.Entry<Integer, KBucket> entry : k_buckets.entrySet()) { // prev solution was until ALPHA but why? it should be all of the nodes in all buckets
 			neighbour_candidates.addAll(entry.getValue().neighbours.keySet());
 			// remove source id
-			neighbour_candidates.remove(src);
 			//prefix_len++;
 		}
-
+		neighbour_candidates.remove(src);
 		// create a map (distance, node)
 		TreeMap<BigInteger, BigInteger> distance_map = new TreeMap<BigInteger, BigInteger>();
 
@@ -146,10 +145,10 @@ public class RoutingTable implements Cloneable {
 		for (Map.Entry<Integer, KBucket> entry : k_buckets.entrySet()) { // prev solution was until ALPHA but why? it should be all of the nodes in all buckets
 			neighbour_candidates.addAll(entry.getValue().neighbours.keySet());
 			// remove source id
-			neighbour_candidates.remove(src);
+			
 			//prefix_len++;
 		}
-
+		neighbour_candidates.remove(src);
 		// create a map (distance, node)
 		TreeMap<BigInteger, BigInteger> distance_map = new TreeMap<BigInteger, BigInteger>();
 

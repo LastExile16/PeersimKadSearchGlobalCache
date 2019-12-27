@@ -82,7 +82,7 @@ public static int h=0;
 	 * keep statistic of number of find value success,表示成功find value的次数
 	 */
 	public static IncrementalStats findVal_success  = new IncrementalStats();
-
+	public static IncrementalStats findVal_fail  = new IncrementalStats();
 	/**
 	 * 发起find value的次数
 	 * The number of initiating "find value"
@@ -146,7 +146,12 @@ public static int h=0;
 	public static  CuckooHashTable<String> staticHashTable = new CuckooHashTable<>( new StringHashFamily( 2 ) );
 	
 	public static HashMap<BigInteger, Integer>overallIssuedQueries = new HashMap<>();
+	public static HashMap<BigInteger, Integer>cachedQueries = new HashMap<>();
+	public static HashMap<Long, Integer>nodeQueryStat = new HashMap<>();
 	public static IncrementalStats duplicateQuery = new IncrementalStats();
+	
+	//har lo fshai
+	public static IncrementalStats closeNodeNotAdded = new IncrementalStats();
 	
 	/** Parameter of the protocol we want to observe */
 	private static final String PAR_PROT = "protocol";
@@ -181,10 +186,10 @@ public static int h=0;
 				CommonState.getTime(), sz,(int)find_op.getSum(),(int)closeNodeValExpected.getSum(),(int)stored_msg.getSum(),(int)sendtostore_msg.getSum(),(int)findVal_success.getSum(),(int)findVal_times.getSum(),(int)real_store_operation.getSum());
 		*/
 		/*String s = String.format("[time=%d]:[N=%d current nodes UP] [%d average no. of msgs per search] [%d closeNodeValExpected sum]  [%d closeNodeHadVal sum]  [%d overloadNode sum] [%d findValueTimes sum] [%d findValueSuccess] [%d realStoreOperation] [%d realStoreFailOperation] [%d cachHit sum] [%d storageHit sum]",
-				CommonState.getTime(), sz,(int)hopFindValue.getAverage(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum(), (int)cacheHit.getSum(), (int)storageHit.getSum());
+				CommonState.getTime()/(1000*60*60), sz,(int)hopFindValue.getAverage(),(int)closeNodeValExpected.getSum(),(int)closeNodeHadVal.getSum(),(int)overloadNode.getSum(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)real_store_operation.getSum(), (int)real_store_fail_operation.getSum(), (int)cacheHit.getSum(), (int)storageHit.getSum());
 		*/
-		String s = String.format("[%d time]:[%d no data found] [%d duplicateQuery] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess]",
-				CommonState.getTime(), (int)closeNodeNoVal.getSum(), (int)duplicateQuery.getSum(), (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum());
+		String s = String.format("[%d time]:[%d no data found] [%d duplicateQuery] [%d no. of msgs per search max] [%d no. of msgs per search avg] [%d no. of msgs per search min] [%d cacheHitPerMsg sum] [%d cacheHitPerQuery sum] [%d queryMsgTime avg] [%d findValueTimes sum] [%d findValueSuccess] [%d findValueFail]",
+				CommonState.getTime(), (int)closeNodeNoVal.getSum(), (int)duplicateQuery.getSum(), (int)hopFindValue.getMax(), (int)hopFindValue.getAverage(), (int)hopFindValue.getMin(), (int)cacheHitPerMsg.getSum(), (int)cacheHitPerQuery.getSum(), (int)queryMsgTime.getAverage(),(int)findVal_times.getSum(),(int)findVal_success.getSum(),(int)findVal_fail.getSum());
 		
 		/* not useful for now
 		if (CommonState.getTime() == 3500000) {
@@ -214,7 +219,7 @@ public static int h=0;
 		// XXX debug ouput to show the routing table of the supernode to make sure it contains the entire network 
 		 /* if(CommonState.getTime()>100000)
 			System.exit(1);
-		System.out.println("rt: "+supernode.routingTable.toString());*/
+		System.out.println("rt: "+nodeQueryStat);*/
 		
 		System.err.println(s);
 		/*if(CommonState.getTime()==3600000) {
@@ -224,6 +229,9 @@ public static int h=0;
 			}catch (IOException e) {
 			    System.err.println(e);
 			}
+		}*/
+		/*if(CommonState.getTime()>172799998) {
+			System.out.println("frquency of queries per node:\n "+nodeQueryStat);
 		}*/
 		return false;
 	}

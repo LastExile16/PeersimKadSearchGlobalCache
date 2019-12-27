@@ -235,7 +235,7 @@ public class Message extends SimpleEvent {
 		dolly.src = this.src;
 		dolly.dest = this.dest;
 		dolly.operationId = this.operationId;
-		// FIXME this shoud be deep clone not adding a reference only (for now its ok)
+		// FIXME this should be deep clone not adding a reference only (for now its ok)
 		dolly.body = this.body; // deep cloning?
 
 		return dolly;

@@ -76,7 +76,6 @@ public class TrafficGenerator implements Control {
 
 		// send message
 		EDSimulator.add(0, generateFindNodeMessage(), start, pid);
-
 		return false;
 	}
 

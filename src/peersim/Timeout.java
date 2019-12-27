@@ -16,7 +16,7 @@ public class Timeout extends SimpleEvent {
 	public static final int TIMEOUT = 100;
 
 	/**
-	 * The node wich failed to response
+	 * The node which failed to response
 	 */
 	public BigInteger node;
 
@@ -26,7 +26,7 @@ public class Timeout extends SimpleEvent {
 	public long msgID;
 
 	/**
-	 * The id of the operation in wich the message has been sent
+	 * The id of the operation in which the message has been sent
 	 */
 	public long opID;
 
@@ -41,4 +41,13 @@ public class Timeout extends SimpleEvent {
 		this.msgID = msgID;
 		this.opID = opID;
 	}
+
+	@Override
+	public String toString() {
+		return "Timeout [node=" + node + ", msgID=" + msgID + ", opID=" + opID + ", type=" + type + ", timestamp="
+				+ timestamp + ", getType()=" + getType() + ", getClass()=" + getClass() + ", hashCode()=" + hashCode()
+				+ ", toString()=" + super.toString() + "]";
+	}
+	
+	
 }

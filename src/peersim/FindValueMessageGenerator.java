@@ -101,8 +101,8 @@ public static int i=0;
 		String multi_key_q_str = "";
 		// make sure to get more than one random key:
 		// int r_no_of_keys = CommonState.r.nextInt(2)+2; // 2 or 3
-		int r_no_of_keys = CommonState.r.nextInt(3)+1; // 1 or 2 or 3
-		// int r_no_of_keys = CommonState.r.nextInt(1)+1;
+		//int r_no_of_keys = CommonState.r.nextInt(3)+1; // 1 or 2 or 3
+		int r_no_of_keys = CommonState.r.nextInt(1)+1;
 		// System.err.println(r_no_of_keys);
 		List<BigInteger> multi_keys_q_arr = new ArrayList<BigInteger>();
 		while(r_no_of_keys>0) {
@@ -140,7 +140,9 @@ public static int i=0;
 		Message m = Message.makeFindValue((BigInteger[])multi_keys_q_arr.toArray(new BigInteger[multi_keys_q_arr.size()]));
 		//System.out.print(m.body+" rand: " + rand+" - ");
 		m.timestamp = CommonState.getTime();
-		
+		/*if(multi_keys_q_arr.size()<2) {
+			System.exit(11);
+		}*/
 		/*
 		 * originally the m.dest is used to find out the closest node to the given value, 
 		 * but since I've added multikeyword query, first I generate an array of keys and store it in m.body
@@ -152,7 +154,8 @@ public static int i=0;
 		// System.out.println(key);
 		// System.exit(1);
 		//m.body = key;
-		//m.dest = key;
+		m.body = new BigInteger[] {key};
+		m.dest = key;
 		// does the query issued before.
 		if(KademliaObserver.overallIssuedQueries.containsKey(multi_key_q_hash)) {
 			KademliaObserver.overallIssuedQueries.put(multi_key_q_hash, KademliaObserver.overallIssuedQueries.get(multi_key_q_hash)+1);
@@ -194,7 +197,20 @@ public static int i=0;
 		if(generatedQuery == null) {
 			return false;
 		}
-		
+		/*if(KademliaObserver.findVal_success.getSum()>=4)
+		{
+			return true;
+		}
+		if(KademliaObserver.findVal_times.getSum()>=4)
+		{
+			return false;
+		}*/
+		if(!KademliaObserver.nodeQueryStat.containsKey(start.getID())) {
+			KademliaObserver.nodeQueryStat.put(start.getID(), 1);
+		}else {
+			int freq = KademliaObserver.nodeQueryStat.get(start.getID());
+			KademliaObserver.nodeQueryStat.put(start.getID(), freq+1);
+		}
 		// send message
 		EDSimulator.add(0, generatedQuery, start, pid);
 		
